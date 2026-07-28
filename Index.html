@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>مدیریت شارژ ساختمان</title>
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--text:#17202a;--muted:#6b7280;--primary:#0f4c81;--danger:#b91c1c;--ok:#047857;--line:#e5e7eb}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,sans-serif;background:var(--bg);color:var(--text)}
+.container{max-width:1100px;margin:auto;padding:16px}
+h1{font-size:24px;margin:0 0 6px}
+.sub{color:var(--muted);font-size:13px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.col-4{grid-column:span 4}.col-6{grid-column:span 6}.col-8{grid-column:span 8}.col-12{grid-column:span 12}
+label{display:block;font-size:13px;margin-bottom:5px;color:#374151}
+input,select,textarea,button{width:100%;font:inherit}
+input,select,textarea{border:1px solid #d1d5db;border-radius:10px;padding:10px;background:#fff}
+textarea{min-height:85px;resize:vertical}
+button{border:0;border-radius:10px;padding:11px 12px;cursor:pointer;font-weight:700}
+.btn{background:var(--primary);color:#fff}
+.btn2{background:#e5e7eb;color:#111827}
+.btn-danger{background:#fee2e2;color:var(--danger)}
+.btn-ok{background:#d1fae5;color:var(--ok)}
+.row{display:grid;grid-template-columns:repeat(12,1fr);gap:10px}
+.f3{grid-column:span 3}.f4{grid-column:span 4}.f6{grid-column:span 6}.f8{grid-column:span 8}.f12{grid-column:span 12}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.actions button{width:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{background:#f9fafb;position:sticky;top:0}
+.tablewrap{overflow:auto;max-height:430px;border:1px solid var(--line);border-radius:10px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px}
+.kpi b{display:block;font-size:20px;margin-top:6px}
+.badge{display:inline-block;padding:3px 8px;border-radius:999px;font-size:12px}
+.debt{background:#fee2e2;color:#991b1b}.credit{background:#d1fae5;color:#065f46}.zero{background:#e5e7eb;color:#374151}
+.tabs{display:flex;gap:8px;margin-bottom:12px;overflow:auto}.tab{width:auto;background:#e5e7eb;color:#111827}.tab.active{background:var(--primary);color:#fff}
+.hidden{display:none}
+.note{font-size:12px;color:var(--muted);line-height:1.7}
+@media(max-width:800px){
+.col-4,.col-6,.col-8{grid-column:span 12}
+.f3,.f4,.f6,.f8{grid-column:span 12}
+.kpis{grid-template-columns:repeat(2,1fr)}
+h1{font-size:21px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>مدیریت شارژ ساختمان</h1>
+  <div class="sub">ثبت واحدها، بدهی، پرداخت‌ها، هزینه‌های ساختمان و خروجی اکسل</div>
+
+  <div class="kpis">
+    <div class="kpi">جمع بدهی واحدها<b id="kpiDebt">0</b></div>
+    <div class="kpi">جمع بستانکاری<b id="kpiCredit">0</b></div>
+    <div class="kpi">مجموع پرداخت‌ها<b id="kpiPayments">0</b></div>
+    <div class="kpi">مجموع هزینه‌ها<b id="kpiExpenses">0</b></div>
+  </div>
+
+  <div class="tabs" style="margin-top:14px">
+    <button class="tab active" data-tab="units">واحدها</button>
+    <button class="tab" data-tab="payments">ثبت پرداخت</button>
+    <button class="tab" data-tab="expenses">ثبت هزینه</button>
+    <button class="tab" data-tab="reports">گزارش و خروجی</button>
+  </div>
+
+  <section id="units" class="tabpane">
+    <div class="grid">
+      <div class="card col-4">
+        <h3>تعریف واحد</h3>
+        <div class="row">
+          <div class="f6"><label>شماره واحد</label><input id="unitNo" placeholder="مثلاً ۱"></div>
+          <div class="f6"><label>نام مالک/ساکن</label><input id="owner" placeholder="اختیاری"></div>
+          <div class="f12"><label>بدهی اولیه</label><input id="initialDebt" type="number" inputmode="numeric" value="0"></div>
+          <div class="f12"><button class="btn" onclick="addUnit()">افزودن واحد</button></div>
+        </div>
+        <p class="note">برای هر واحد یک‌بار تعریف انجام دهید. بعداً با ثبت پرداخت، مانده بدهی به‌صورت خودکار کم می‌شود.</p>
+      </div>
+      <div class="card col-8">
+        <div class="actions" style="justify-content:space-between;align-items:center">
+          <h3 style="margin:0">لیست واحدها</h3>
+          <button class="btn2" onclick="addMonthlyCharge()">اعمال شارژ به همه واحدها</button>
+        </div>
+        <div class="tablewrap" style="margin-top:12px">
+          <table><thead><tr><th>واحد</th><th>نام</th><th>مانده</th><th>عملیات</th></tr></thead><tbody id="unitsBody"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="payments" class="tabpane hidden">
+    <div class="grid">
+      <div class="card col-4">
+        <h3>ثبت واریزی</h3>
+        <div class="row">
+          <div class="f12"><label>واحد</label><select id="payUnit"></select></div>
+          <div class="f6"><label>مبلغ</label><input id="payAmount" type="number" inputmode="numeric"></div>
+          <div class="f6"><label>تاریخ</label><input id="payDate" type="date"></div>
+          <div class="f12"><label>شرح</label><input id="payDesc" placeholder="مثلاً شارژ تیرماه"></div>
+          <div class="f12"><button class="btn" onclick="addPayment()">ثبت پرداخت</button></div>
+        </div>
+      </div>
+      <div class="card col-8">
+        <h3>سوابق پرداخت‌ها</h3>
+        <div class="tablewrap">
+          <table><thead><tr><th>تاریخ</th><th>واحد</th><th>مبلغ</th><th>شرح</th><th>حذف</th></tr></thead><tbody id="paymentsBody"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="expenses" class="tabpane hidden">
+    <div class="grid">
+      <div class="card col-4">
+        <h3>ثبت هزینه ساختمان</h3>
+        <div class="row">
+          <div class="f6"><label>مبلغ</label><input id="expAmount" type="number" inputmode="numeric"></div>
+          <div class="f6"><label>تاریخ</label><input id="expDate" type="date"></div>
+          <div class="f12"><label>دسته‌بندی</label>
+            <select id="expCategory">
+              <option>تعمیرات</option><option>نظافت</option><option>آب</option><option>برق</option>
+              <option>گاز</option><option>آسانسور</option><option>نگهبانی</option><option>سایر</option>
+            </select>
+          </div>
+          <div class="f12"><label>شرح هزینه</label><textarea id="expDesc" placeholder="شرح کامل هزینه"></textarea></div>
+          <div class="f12"><button class="btn" onclick="addExpense()">ثبت هزینه</button></div>
+        </div>
+      </div>
+      <div class="card col-8">
+        <h3>سوابق هزینه‌ها</h3>
+        <div class="tablewrap">
+          <table><thead><tr><th>تاریخ</th><th>دسته</th><th>مبلغ</th><th>شرح</th><th>حذف</th></tr></thead><tbody id="expensesBody"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="reports" class="tabpane hidden">
+    <div class="card">
+      <h3>گزارش و پشتیبان‌گیری</h3>
+      <div class="actions">
+        <button class="btn-ok" onclick="exportExcel()">خروجی اکسل</button>
+        <button class="btn2" onclick="exportBackup()">دانلود فایل پشتیبان</button>
+        <label class="btn2" style="cursor:pointer;padding:11px 12px;border-radius:10px;font-weight:700">
+          بازیابی پشتیبان<input type="file" accept=".json" onchange="importBackup(event)" style="display:none">
+        </label>
+        <button class="btn-danger" onclick="clearAll()">پاک‌کردن همه اطلاعات</button>
+      </div>
+      <p class="note">اطلاعات داخل مرورگر همین دستگاه ذخیره می‌شود. برای اطمینان، هر چند وقت یک‌بار فایل پشتیبان بگیرید.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+const KEY='building_charge_manager_v1';
+let db=JSON.parse(localStorage.getItem(KEY)||'{"units":[],"payments":[],"expenses":[]}');
+const fmt=n=>Number(n||0).toLocaleString('fa-IR');
+const today=()=>new Date().toISOString().slice(0,10);
+document.getElementById('payDate').value=today();
+document.getElementById('expDate').value=today();
+
+function save(){localStorage.setItem(KEY,JSON.stringify(db));render()}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function unitBalance(id){
+ const u=db.units.find(x=>x.id===id); if(!u)return 0;
+ const paid=db.payments.filter(x=>x.unitId===id).reduce((a,b)=>a+Number(b.amount),0);
+ const charges=Number(u.initialDebt||0)+Number(u.extraCharges||0);
+ return charges-paid;
+}
+function addUnit(){
+ const no=unitNo.value.trim(); if(!no)return alert('شماره واحد را وارد کنید');
+ if(db.units.some(u=>u.no===no))return alert('این واحد قبلاً ثبت شده');
+ db.units.push({id:uid(),no,owner:owner.value.trim(),initialDebt:Number(initialDebt.value||0),extraCharges:0});
+ unitNo.value='';owner.value='';initialDebt.value=0;save()
+}
+function addMonthlyCharge(){
+ if(!db.units.length)return alert('ابتدا واحدها را ثبت کنید');
+ const amount=prompt('مبلغ شارژ هر واحد را وارد کنید:'); if(amount===null)return;
+ const n=Number(amount); if(!n||n<0)return alert('مبلغ معتبر نیست');
+ const desc=prompt('شرح شارژ:', 'شارژ ماهانه')||'شارژ ماهانه';
+ db.units.forEach(u=>u.extraCharges=Number(u.extraCharges||0)+n);
+ db.expenses; // no-op
+ save(); alert('شارژ برای همه واحدها اعمال شد: '+desc)
+}
+function addPayment(){
+ const unitId=payUnit.value, amount=Number(payAmount.value);
+ if(!unitId||!amount||amount<=0)return alert('واحد و مبلغ معتبر را وارد کنید');
+ db.payments.push({id:uid(),unitId,amount,date:payDate.value||today(),desc:payDesc.value.trim()});
+ payAmount.value='';payDesc.value='';save()
+}
+function addExpense(){
+ const amount=Number(expAmount.value); if(!amount||amount<=0)return alert('مبلغ معتبر را وارد کنید');
+ db.expenses.push({id:uid(),amount,date:expDate.value||today(),category:expCategory.value,desc:expDesc.value.trim()});
+ expAmount.value='';expDesc.value='';save()
+}
+function delUnit(id){
+ if(db.payments.some(p=>p.unitId===id))return alert('برای این واحد پرداخت ثبت شده؛ ابتدا پرداخت‌های آن را حذف کنید');
+ if(confirm('این واحد حذف شود؟')){db.units=db.units.filter(x=>x.id!==id);save()}
+}
+function delPayment(id){if(confirm('این پرداخت حذف شود؟')){db.payments=db.payments.filter(x=>x.id!==id);save()}}
+function delExpense(id){if(confirm('این هزینه حذف شود؟')){db.expenses=db.expenses.filter(x=>x.id!==id);save()}}
+function editDebt(id){
+ const u=db.units.find(x=>x.id===id); const v=prompt('بدهی اولیه جدید:',u.initialDebt);
+ if(v!==null&&!isNaN(Number(v))){u.initialDebt=Number(v);save()}
+}
+function render(){
+ unitsBody.innerHTML=db.units.map(u=>{
+  const b=unitBalance(u.id); const cls=b>0?'debt':b<0?'credit':'zero';
+  const label=b>0?'بدهکار':b<0?'بستانکار':'تسویه';
+  return `<tr><td>${esc(u.no)}</td><td>${esc(u.owner)}</td><td><span class="badge ${cls}">${label}: ${fmt(Math.abs(b))}</span></td>
+  <td><button class="btn2" style="width:auto;padding:6px 8px" onclick="editDebt('${u.id}')">ویرایش بدهی</button>
+  <button class="btn-danger" style="width:auto;padding:6px 8px" onclick="delUnit('${u.id}')">حذف</button></td></tr>`
+ }).join('')||'<tr><td colspan="4">هنوز واحدی ثبت نشده است.</td></tr>';
+ payUnit.innerHTML='<option value="">انتخاب واحد</option>'+db.units.map(u=>`<option value="${u.id}">واحد ${esc(u.no)} - مانده ${fmt(unitBalance(u.id))}</option>`).join('');
+ paymentsBody.innerHTML=[...db.payments].reverse().map(p=>{
+  const u=db.units.find(x=>x.id===p.unitId);
+  return `<tr><td>${p.date}</td><td>${u?esc(u.no):'-'}</td><td>${fmt(p.amount)}</td><td>${esc(p.desc)}</td><td><button class="btn-danger" style="width:auto;padding:6px 8px" onclick="delPayment('${p.id}')">حذف</button></td></tr>`
+ }).join('')||'<tr><td colspan="5">پرداختی ثبت نشده است.</td></tr>';
+ expensesBody.innerHTML=[...db.expenses].reverse().map(e=>`<tr><td>${e.date}</td><td>${esc(e.category)}</td><td>${fmt(e.amount)}</td><td>${esc(e.desc)}</td><td><button class="btn-danger" style="width:auto;padding:6px 8px" onclick="delExpense('${e.id}')">حذف</button></td></tr>`).join('')||'<tr><td colspan="5">هزینه‌ای ثبت نشده است.</td></tr>';
+ const bals=db.units.map(u=>unitBalance(u.id));
+ kpiDebt.textContent=fmt(bals.filter(x=>x>0).reduce((a,b)=>a+b,0));
+ kpiCredit.textContent=fmt(Math.abs(bals.filter(x=>x<0).reduce((a,b)=>a+b,0)));
+ kpiPayments.textContent=fmt(db.payments.reduce((a,b)=>a+Number(b.amount),0));
+ kpiExpenses.textContent=fmt(db.expenses.reduce((a,b)=>a+Number(b.amount),0));
+}
+function csvCell(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
+function exportExcel(){
+ const rows=[];
+ rows.push(['گزارش واحدها']);
+ rows.push(['واحد','نام','بدهی اولیه','شارژهای اضافه','جمع پرداخت','مانده']);
+ db.units.forEach(u=>{
+  const paid=db.payments.filter(p=>p.unitId===u.id).reduce((a,b)=>a+Number(b.amount),0);
+  rows.push([u.no,u.owner,u.initialDebt||0,u.extraCharges||0,paid,unitBalance(u.id)]);
+ });
+ rows.push([]);rows.push(['پرداخت‌ها']);rows.push(['تاریخ','واحد','مبلغ','شرح']);
+ db.payments.forEach(p=>{const u=db.units.find(x=>x.id===p.unitId);rows.push([p.date,u?u.no:'',p.amount,p.desc])});
+ rows.push([]);rows.push(['هزینه‌ها']);rows.push(['تاریخ','دسته‌بندی','مبلغ','شرح']);
+ db.expenses.forEach(e=>rows.push([e.date,e.category,e.amount,e.desc]));
+ const csv='\ufeff'+rows.map(r=>r.map(csvCell).join(',')).join('\n');
+ const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='گزارش-شارژ-ساختمان.csv';a.click();URL.revokeObjectURL(a.href);
+}
+function exportBackup(){
+ const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='پشتیبان-شارژ-ساختمان.json';a.click();URL.revokeObjectURL(a.href);
+}
+function importBackup(ev){
+ const f=ev.target.files[0]; if(!f)return;
+ const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(!x.units||!x.payments||!x.expenses)throw 0;db=x;save();alert('اطلاعات بازیابی شد')}catch{alert('فایل پشتیبان معتبر نیست')}};r.readAsText(f);ev.target.value='';
+}
+function clearAll(){if(confirm('تمام اطلاعات برای همیشه پاک شود؟')){db={units:[],payments:[],expenses:[]};save()}}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+ document.querySelectorAll('.tabpane').forEach(x=>x.classList.add('hidden'));
+ b.classList.add('active');document.getElementById(b.dataset.tab).classList.remove('hidden');
+});
+render();
+</script>
+</body>
+</html>
