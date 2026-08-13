@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f4c81">
+<title>Kh17 | مدیریت شارژ ساختمان</title>
+<style>
+:root{--bg:#f3f6f9;--card:#fff;--text:#18212f;--muted:#667085;--line:#e4e7ec;--primary:#0f4c81;--danger:#b42318;--ok:#067647;--warn:#b54708}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer}.app{max-width:1200px;margin:auto;padding:16px 16px 90px}
+.header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}.header h1{margin:0;font-size:23px}.header p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.btn{border:0;border-radius:10px;padding:9px 12px;font-weight:700}.primary{background:var(--primary);color:#fff}.secondary{background:#e9f0f6;color:#173b63}.danger{background:#fee4e2;color:var(--danger)}.ok{background:#dcfae6;color:var(--ok)}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:14px;box-shadow:0 2px 10px rgba(16,24,40,.04)}.c3{grid-column:span 3}.c4{grid-column:span 4}.c8{grid-column:span 8}
+.kpi span{font-size:12px;color:var(--muted)}.kpi b{display:block;font-size:21px;margin-top:7px}.tabs{display:flex;gap:8px;overflow:auto;margin:14px 0 12px}.tab{white-space:nowrap;border:1px solid var(--line);background:#fff;padding:9px 12px;border-radius:10px}.tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.page{display:none}.page.active{display:block}.row{display:grid;grid-template-columns:repeat(12,1fr);gap:10px}.f4{grid-column:span 4}.f6{grid-column:span 6}.f12{grid-column:span 12}
+label{display:block;font-size:13px;color:#344054;margin-bottom:5px}input,select,textarea{width:100%;border:1px solid #d0d5dd;border-radius:10px;padding:10px;background:#fff}textarea{min-height:80px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px;max-height:500px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:9px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}th{background:#f9fafb;position:sticky;top:0}
+.badge{display:inline-flex;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:800}.debt{background:#fee4e2;color:#b42318}.credit{background:#dcfae6;color:#067647}.zero{background:#eaecf0;color:#475467}
+.section-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}.section-head h3,.card h3{margin:0;font-size:17px}.actions{display:flex;gap:6px;flex-wrap:wrap}.actions .btn{padding:6px 8px;font-size:12px}.note{font-size:12px;color:var(--muted);line-height:1.7}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.42);display:grid;place-items:center;padding:16px;z-index:99}.modal.hidden{display:none}.modal-card{width:min(100%,540px);background:#fff;border-radius:16px;padding:16px;max-height:90vh;overflow:auto}
+@media(max-width:800px){.c3,.c4,.c8{grid-column:span 12}.f4,.f6{grid-column:span 12}.grid.kpis{grid-template-columns:repeat(2,1fr)}.grid.kpis>.c3{grid-column:auto}.header{align-items:flex-start;flex-direction:column}}
+
+.paid-badge{background:#d1fae5;color:#065f46}
+.unpaid-badge{background:#fef3c7;color:#92400e}
+.pay-expense-modal,.account-modal{position:fixed;inset:0;background:rgba(15,23,42,.52);display:grid;place-items:center;padding:16px;z-index:110}
+.pay-expense-modal.hidden,.account-modal.hidden{display:none}
+.pay-expense-card{width:min(100%,500px);background:#fff;border-radius:18px;padding:16px;max-height:92vh;overflow:auto}
+.expense-payment-note{font-size:12px;color:var(--muted);line-height:1.7}
+.account-modal-card{width:min(100%,980px);max-height:92vh;overflow:auto;background:#fff;border-radius:18px;padding:16px}
+.account-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.account-summary-item{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:12px}
+.account-summary-item span{display:block;font-size:12px;color:var(--muted)}
+.account-summary-item b{display:block;margin-top:6px;font-size:17px}
+.account-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.account-toolbar input{width:auto;min-width:145px}
+.account-print-title{display:none}
+@media(max-width:800px){.account-summary-grid{grid-template-columns:repeat(2,1fr)}.account-toolbar input,.account-toolbar button{width:100%}}
+
+</style>
+</head>
+<body>
+<div class="app">
+<div class="header">
+ <div><h1>Kh17</h1><p>مدیریت شارژ ساختمان — تاریخ شمسی و ویرایش کامل اطلاعات</p></div>
+ <div class="actions">
+  <button class="btn secondary" onclick="exportBackup()">پشتیبان</button><button class="btn warn" onclick="recoverLegacyData()">بازیابی اطلاعات قدیمی</button>
+  <label class="btn secondary" style="cursor:pointer">بازیابی<input type="file" accept=".json" onchange="importBackup(event)" hidden></label>
+  <button class="btn ok" onclick="exportCSV()">خروجی اکسل</button>
+ </div>
+</div>
+
+<div class="grid kpis">
+ <div class="card c3 kpi"><span>جمع بدهی واحدها</span><b id="kDebt">۰</b></div>
+ <div class="card c3 kpi"><span>جمع بستانکاری</span><b id="kCredit">۰</b></div>
+ <div class="card c3 kpi"><span>موجودی صندوق</span><b id="kFund">۰</b></div>
+ <div class="card c3 kpi"><span>مجموع هزینه‌های ثبت‌شده</span><b id="kExpense">۰</b></div>
+</div>
+
+<div class="tabs">
+ <button class="tab active" data-page="units">واحدها</button>
+ <button class="tab" data-page="charges">شارژها</button>
+ <button class="tab" data-page="payments">پرداخت‌ها</button>
+ <button class="tab" data-page="expenses">هزینه‌ها</button>
+ <button class="tab" data-page="statement">صورت‌حساب</button>
+</div>
+
+<section id="units" class="page active">
+<div class="grid">
+ <div class="card c4">
+  <h3>ثبت واحد</h3><br>
+  <div class="row">
+   <div class="f4"><label>شماره واحد</label><input id="unitNo"></div>
+   <div class="f4"><label>طبقه</label><input id="unitFloor"></div>
+   <div class="f4"><label>تعداد نفرات</label><input id="unitPeople" type="number" value="1"></div>
+   <div class="f6"><label>نام مالک</label><input id="unitOwner"></div>
+   <div class="f6"><label>نام ساکن</label><input id="unitResident"></div>
+   <div class="f6"><label>تلفن</label><input id="unitPhone"></div>
+   <div class="f6"><label>مانده اولیه</label><input id="unitOpening" type="number" value="0"></div>
+   <div class="f12"><label>نوع مانده</label><select id="unitOpeningType"><option value="debt">بدهکار</option><option value="credit">بستانکار</option></select></div>
+   <div class="f12"><button class="btn primary" style="width:100%" onclick="addUnit()">ثبت واحد</button></div>
+  </div>
+ </div>
+ <div class="card c8">
+  <div class="section-head"><h3>واحدها</h3></div>
+  <div class="table-wrap"><table><thead><tr><th>واحد</th><th>مالک / ساکن</th><th>تلفن</th><th>مانده</th><th>عملیات</th></tr></thead><tbody id="unitsBody"></tbody></table></div>
+ </div>
+</div>
+</section>
+
+<section id="charges" class="page">
+<div class="grid">
+ <div class="card c4">
+  <h3>ثبت شارژ</h3><br>
+  <div class="row">
+   <div class="f12"><label>عنوان</label><input id="chargeTitle" placeholder="شارژ مرداد ۱۴۰۵"></div>
+   <div class="f6"><label>مبلغ</label><input id="chargeAmount" type="number"></div>
+   <div class="f6"><label>تاریخ شمسی</label><input id="chargeDate" placeholder="1405/05/21"></div>
+   <div class="f12"><label>اعمال برای</label><select id="chargeTarget"><option value="all">همه واحدها</option><option value="single">یک واحد</option></select></div>
+   <div class="f12" id="chargeUnitWrap" style="display:none"><label>واحد</label><select id="chargeUnit"></select></div>
+   <div class="f12"><label>شرح</label><textarea id="chargeDesc"></textarea></div>
+   <div class="f12"><button class="btn primary" style="width:100%" onclick="addCharge()">ثبت شارژ</button></div>
+  </div>
+ </div>
+ <div class="card c8">
+  <div class="section-head"><h3>سوابق شارژها</h3><select id="chargeSort" onchange="renderCharges()" style="width:auto"><option value="date_desc">تاریخ: جدید به قدیم</option><option value="date_asc">تاریخ: قدیم به جدید</option><option value="amount_desc">مبلغ: زیاد به کم</option><option value="amount_asc">مبلغ: کم به زیاد</option><option value="unit_asc">واحد: صعودی</option><option value="unit_desc">واحد: نزولی</option></select></div><div class="table-wrap"><table><thead><tr><th>تاریخ</th><th>عنوان</th><th>واحد</th><th>مبلغ</th><th>شرح</th><th>عملیات</th></tr></thead><tbody id="chargesBody"></tbody></table></div>
+ </div>
+</div>
+</section>
+
+<section id="payments" class="page">
+<div class="grid">
+ <div class="card c4">
+  <h3>ثبت پرداخت</h3><br>
+  <div class="row">
+   <div class="f12"><label>واحد</label><select id="payUnit"></select></div>
+   <div class="f6"><label>مبلغ</label><input id="payAmount" type="number"></div>
+   <div class="f6"><label>تاریخ شمسی</label><input id="payDate" placeholder="1405/05/21"></div>
+   <div class="f6"><label>روش پرداخت</label><select id="payMethod"><option>کارت</option><option>انتقال بانکی</option><option>نقد</option><option>سایر</option></select></div>
+   <div class="f6"><label>شماره پیگیری</label><input id="payRef"></div>
+   <div class="f12"><label>شرح</label><textarea id="payDesc"></textarea></div>
+   <div class="f12"><button class="btn primary" style="width:100%" onclick="addPayment()">ثبت پرداخت</button></div>
+  </div>
+ </div>
+ <div class="card c8">
+  <div class="section-head"><h3>سوابق پرداخت‌ها</h3><select id="paymentSort" onchange="renderPayments()" style="width:auto"><option value="date_desc">تاریخ: جدید به قدیم</option><option value="date_asc">تاریخ: قدیم به جدید</option><option value="amount_desc">مبلغ: زیاد به کم</option><option value="amount_asc">مبلغ: کم به زیاد</option><option value="unit_asc">واحد: صعودی</option><option value="unit_desc">واحد: نزولی</option></select></div><div class="table-wrap"><table><thead><tr><th>تاریخ</th><th>واحد</th><th>مبلغ</th><th>روش</th><th>پیگیری</th><th>شرح</th><th>عملیات</th></tr></thead><tbody id="paymentsBody"></tbody></table></div>
+ </div>
+</div>
+</section>
+
+<section id="expenses" class="page">
+<div class="grid">
+ <div class="card c4">
+  <h3>ثبت هزینه ساختمان</h3><br>
+  <div class="row">
+   <div class="f6"><label>مبلغ</label><input id="expAmount" type="number"></div>
+   <div class="f6"><label>تاریخ شمسی</label><input id="expDate" placeholder="1405/05/21"></div>
+   <div class="f12"><label>دسته‌بندی</label><select id="expCategory"><option>نظافت</option><option>آسانسور</option><option>برق</option><option>آب</option><option>گاز</option><option>تعمیرات</option><option>نگهبانی</option><option>بیمه</option><option>سایر</option></select></div>
+   <div class="f12"><label>شرح هزینه</label><textarea id="expDesc"></textarea></div>
+   <div class="f12"><button class="btn primary" style="width:100%" onclick="addExpense()">ثبت هزینه</button></div>
+  </div>
+ </div>
+ <div class="card c8">
+  <div class="section-head"><h3>سوابق هزینه‌ها</h3><select id="expenseSort" onchange="renderExpenses()" style="width:auto"><option value="date_desc">تاریخ: جدید به قدیم</option><option value="date_asc">تاریخ: قدیم به جدید</option><option value="amount_desc">مبلغ: زیاد به کم</option><option value="amount_asc">مبلغ: کم به زیاد</option><option value="status">وضعیت پرداخت</option></select></div><div class="table-wrap"><table><thead><tr><th>تاریخ ثبت</th><th>دسته‌بندی</th><th>مبلغ</th><th>شرح</th><th>وضعیت</th><th>تاریخ پرداخت</th><th>توضیحات پرداخت</th><th>عملیات</th></tr></thead><tbody id="expensesBody"></tbody></table></div>
+ </div>
+</div>
+</section>
+
+<section id="statement" class="page">
+<div class="card">
+ <div class="section-head"><h3>صورت‌حساب واحد</h3><select id="statementUnit" onchange="renderStatement()" style="max-width:240px"></select></div>
+ <div id="statementSummary" class="note" style="margin-bottom:10px"></div>
+ <div class="table-wrap"><table><thead><tr><th>تاریخ</th><th>نوع</th><th>شرح</th><th>بدهکار</th><th>بستانکار</th><th>مانده</th></tr></thead><tbody id="statementBody"></tbody></table></div>
+</div>
+</section>
+</div>
+
+<div id="editModal" class="modal hidden">
+ <div class="modal-card">
+  <div class="section-head"><h3 id="editTitle">ویرایش</h3><button class="btn secondary" onclick="closeEdit()">بستن</button></div>
+  <div id="editFields"></div>
+  <button class="btn primary" style="width:100%;margin-top:8px" onclick="saveEdit()">ذخیره تغییرات</button>
+ </div>
+</div>
+
+
+<div id="payExpenseModal" class="pay-expense-modal hidden">
+  <div class="pay-expense-card">
+    <div class="section-head">
+      <h3>پرداخت هزینه</h3>
+      <button class="btn secondary" type="button" onclick="closePayExpense()">بستن</button>
+    </div>
+    <div id="payExpenseInfo" class="expense-payment-note" style="margin-bottom:12px"></div>
+    <input type="hidden" id="payExpenseId">
+
+    <label>نوع پرداخت</label>
+    <select id="payExpenseMode" onchange="toggleExpensePayMode()">
+      <option value="partial">پرداخت بخشی از مبلغ</option>
+      <option value="all">پرداخت کل مانده</option>
+    </select>
+
+    <div id="payExpenseAmountWrap">
+      <label>مبلغ این پرداخت</label>
+      <input id="payExpenseAmount" type="number" min="1" inputmode="numeric">
+    </div>
+
+    <label>تاریخ پرداخت شمسی</label>
+    <input id="payExpenseDate" type="text" inputmode="numeric" placeholder="1405/05/21">
+
+    <label>توضیحات پرداخت</label>
+    <textarea id="payExpenseDesc" placeholder="مثلاً پرداخت مرحله اول حقوق نگهبان - شماره پیگیری 12345"></textarea>
+
+    <button class="btn primary" type="button" style="width:100%;margin-top:8px" onclick="confirmPayExpense()">ثبت این پرداخت</button>
+
+    <div style="margin-top:16px">
+      <div class="section-head"><h3 style="font-size:15px">سوابق پرداخت این هزینه</h3></div>
+      <div class="table-wrap" style="max-height:260px">
+        <table>
+          <thead><tr><th>تاریخ</th><th>مبلغ</th><th>توضیحات</th><th>عملیات</th></tr></thead>
+          <tbody id="expensePaymentsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="accountModal" class="account-modal hidden">
+  <div class="account-modal-card" id="accountPrintable">
+    <div class="section-head">
+      <div>
+        <h3 id="accountTitle">کارت حساب واحد</h3>
+        <div id="accountSubtitle" class="note"></div>
+      </div>
+      <button class="btn secondary no-print" type="button" onclick="closeAccountCard()">بستن</button>
+    </div>
+    <div class="account-print-title"><h2 id="accountPrintTitle">کارت حساب واحد</h2></div>
+    <div id="accountSummaryGrid" class="account-summary-grid"></div>
+    <div class="account-toolbar no-print" style="margin-bottom:12px">
+      <input id="accountFromDate" type="text" inputmode="numeric" placeholder="از تاریخ 1405/01/01">
+      <input id="accountToDate" type="text" inputmode="numeric" placeholder="تا تاریخ 1405/12/29">
+      <select id="accountSort" onchange="renderAccountCard()" style="width:auto"><option value="date_asc">تاریخ: قدیم به جدید</option><option value="date_desc">تاریخ: جدید به قدیم</option><option value="debit_desc">بدهکار: زیاد به کم</option><option value="credit_desc">بستانکار: زیاد به کم</option></select><button class="btn secondary" type="button" onclick="renderAccountCard()">اعمال فیلتر</button>
+      <button class="btn secondary" type="button" onclick="clearAccountFilter()">پاک کردن فیلتر</button>
+      <button class="btn ok" type="button" onclick="exportAccountCSV()">خروجی اکسل واحد</button>
+      <button class="btn secondary" type="button" onclick="printAccountCard()">چاپ / PDF</button>
+    </div>
+    <div class="table-wrap" style="max-height:520px">
+      <table>
+        <thead><tr><th>تاریخ</th><th>نوع تراکنش</th><th>شرح</th><th>بدهکار</th><th>بستانکار</th><th>مانده</th></tr></thead>
+        <tbody id="accountBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY='building_charge_manager_v2';
+let db=JSON.parse(localStorage.getItem(KEY)||'{"units":[],"charges":[],"payments":[],"expenses":[]}');
+
+const LEGACY_KEYS=['kh17_v4_local','kh17_v31_local','building_charge_manager_v1','building_charge_manager_v2'];
+function recordCount(x){
+  if(!x||typeof x!=='object')return 0;
+  return ['units','charges','payments','expenses'].reduce((s,k)=>s+(Array.isArray(x[k])?x[k].length:0),0);
+}
+function normalizeLegacyDb(x){
+  if(!x||typeof x!=='object')return null;
+  const y={
+    units:Array.isArray(x.units)?x.units:[],
+    charges:Array.isArray(x.charges)?x.charges:[],
+    payments:Array.isArray(x.payments)?x.payments:[],
+    expenses:Array.isArray(x.expenses)?x.expenses:[]
+  };
+  return y;
+}
+function findBestLegacyData(){
+  let best=null;
+  for(const key of LEGACY_KEYS){
+    try{
+      const raw=localStorage.getItem(key);
+      if(!raw)continue;
+      const parsed=normalizeLegacyDb(JSON.parse(raw));
+      if(!parsed)continue;
+      const count=recordCount(parsed);
+      if(!best||count>best.count)best={key,data:parsed,count};
+    }catch(e){}
+  }
+  return best;
+}
+function autoRecoverIfCurrentEmpty(){
+  const currentCount=recordCount(db);
+  if(currentCount>0)return;
+  const best=findBestLegacyData();
+  if(best&&best.count>0&&best.key!==KEY){
+    db=best.data;
+    localStorage.setItem(KEY,JSON.stringify(db));
+    setTimeout(()=>alert(`اطلاعات قبلی پیدا و بازیابی شد.\n${best.count} رکورد از نسخه قدیمی بازیابی شد.`),300);
+  }
+}
+function recoverLegacyData(){
+  const best=findBestLegacyData();
+  if(!best||best.count===0)return alert('اطلاعات قدیمی دیگری روی این مرورگر پیدا نشد.');
+  const currentCount=recordCount(db);
+  const msg=`بیشترین اطلاعات پیدا شده: ${best.count} رکورد\nکلید: ${best.key}\nاطلاعات فعلی: ${currentCount} رکورد\n\nآیا این اطلاعات جایگزین اطلاعات فعلی شود؟`;
+  if(!confirm(msg))return;
+  try{
+    const safety={...db};
+    localStorage.setItem('kh17_recovery_safety_'+Date.now(),JSON.stringify(safety));
+    db=best.data;
+    localStorage.setItem(KEY,JSON.stringify(db));
+    migrateDates();
+    migrateExpensePayments();
+    save();
+    alert('بازیابی انجام شد. یک نسخه ایمنی از اطلاعات فعلی هم در مرورگر نگه داشته شد.');
+  }catch(e){
+    alert('بازیابی انجام نشد. لطفاً از صفحه اسکرین‌شات بفرست.');
+  }
+}
+autoRecoverIfCurrentEmpty();
+
+const $=id=>document.getElementById(id),uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7),num=v=>Number(v||0),fmt=v=>num(v).toLocaleString('fa-IR');
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+let editCtx=null;
+const today=()=>jalaliToday();
+$('chargeDate').value=today();$('payDate').value=today();$('expDate').value=today();
+function save(){localStorage.setItem(KEY,JSON.stringify(db));renderAll()}
+function latinDigits(s){return String(s??'').replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d))}
+function jalaliToday(){const parts=new Intl.DateTimeFormat('en-US-u-ca-persian',{year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const g=t=>parts.find(p=>p.type===t)?.value||'';return `${g('year')}/${g('month')}/${g('day')}`}
+function gregorianToJalali(s){if(!/^\d{4}-\d{2}-\d{2}$/.test(String(s||'')))return s;const [y,m,d]=s.split('-').map(Number);const parts=new Intl.DateTimeFormat('en-US-u-ca-persian',{year:'numeric',month:'2-digit',day:'2-digit',timeZone:'UTC'}).formatToParts(new Date(Date.UTC(y,m-1,d)));const g=t=>parts.find(p=>p.type===t)?.value||'';return `${g('year')}/${g('month')}/${g('day')}`}
+function normalizeJalali(s){s=latinDigits(s).trim().replace(/[-.]/g,'/');const m=s.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);if(!m)return null;const y=Number(m[1]),mo=Number(m[2]),d=Number(m[3]);if(y<1300||y>1499||mo<1||mo>12||d<1||d>31)return null;return `${y}/${String(mo).padStart(2,'0')}/${String(d).padStart(2,'0')}`}
+function validDate(s){return !!normalizeJalali(s)}
+function migrateDates(){let changed=false;['charges','payments','expenses'].forEach(k=>(db[k]||[]).forEach(x=>{if(/^\d{4}-\d{2}-\d{2}$/.test(String(x.date||''))){x.date=gregorianToJalali(x.date);changed=true}}));if(changed)localStorage.setItem(KEY,JSON.stringify(db))}
+migrateDates();
+
+function migrateLegacyUnitFields(){
+ let changed=false;
+ (db.units||[]).forEach(u=>{
+   if(typeof u.opening==='undefined'){
+     const initial=num(u.initialDebt||0)+num(u.extraCharges||0);
+     u.opening=initial;changed=true;
+   }
+   if(typeof u.no==='undefined'&&u.unitNo!==undefined){u.no=String(u.unitNo);changed=true}
+   if(typeof u.owner==='undefined'){u.owner=u.owner_name||'';changed=true}
+   if(typeof u.resident==='undefined'){u.resident=u.resident_name||'';changed=true}
+   if(typeof u.phone==='undefined'){u.phone='';changed=true}
+ });
+ if(changed)localStorage.setItem(KEY,JSON.stringify(db));
+}
+migrateLegacyUnitFields();
+
+function migrateExpensePayments(){
+ let changed=false;
+ (db.expenses||[]).forEach(x=>{
+   if(!Array.isArray(x.payments)){
+     x.payments=[];
+     if(x.paid){
+       x.payments.push({
+         id:uid(),
+         amount:num(x.amount),
+         date:x.paidDate||x.date||today(),
+         desc:x.paymentDesc||'پرداخت ثبت‌شده در نسخه قبلی'
+       });
+     }
+     changed=true;
+   }
+   if(typeof x.paid!=='undefined'){delete x.paid;changed=true}
+   if(typeof x.paidDate!=='undefined'){delete x.paidDate;changed=true}
+   if(typeof x.paymentDesc!=='undefined'){delete x.paymentDesc;changed=true}
+ });
+ if(changed)localStorage.setItem(KEY,JSON.stringify(db));
+}
+migrateExpensePayments();
+
+function chargeSum(id){return db.charges.filter(x=>x.unitId===id).reduce((a,b)=>a+num(b.amount),0)}
+function paySum(id){return db.payments.filter(x=>x.unitId===id).reduce((a,b)=>a+num(b.amount),0)}
+function balance(id){const u=db.units.find(x=>x.id===id);return u?num(u.opening)+chargeSum(id)-paySum(id):0}
+function badge(v){return v>0?`<span class="badge debt">بدهکار ${fmt(v)}</span>`:v<0?`<span class="badge credit">بستانکار ${fmt(Math.abs(v))}</span>`:`<span class="badge zero">تسویه</span>`}
+function unitLabel(id){const u=db.units.find(x=>x.id===id);return u?`واحد ${esc(u.no)}`:'-'}
+
+function addUnit(){
+ const no=$('unitNo').value.trim();if(!no)return alert('شماره واحد را وارد کنید');if(db.units.some(x=>x.no===no))return alert('این واحد قبلاً ثبت شده');
+ let opening=Math.abs(num($('unitOpening').value));if($('unitOpeningType').value==='credit')opening=-opening;
+ db.units.push({id:uid(),no,floor:$('unitFloor').value.trim(),people:num($('unitPeople').value)||1,owner:$('unitOwner').value.trim(),resident:$('unitResident').value.trim(),phone:$('unitPhone').value.trim(),opening});
+ ['unitNo','unitFloor','unitOwner','unitResident','unitPhone'].forEach(x=>$(x).value='');$('unitPeople').value=1;$('unitOpening').value=0;save()
+}
+function addCharge(){
+ const amount=num($('chargeAmount').value),date=normalizeJalali($('chargeDate').value),title=$('chargeTitle').value.trim();if(!amount||!title)return alert('عنوان و مبلغ را وارد کنید');if(!date)return alert('تاریخ شمسی را به شکل 1405/05/21 وارد کنید');
+ const base={title,amount,date,desc:$('chargeDesc').value.trim()};
+ if($('chargeTarget').value==='all')db.units.forEach(u=>db.charges.push({id:uid(),unitId:u.id,...base}));else{const id=$('chargeUnit').value;if(!id)return alert('واحد را انتخاب کنید');db.charges.push({id:uid(),unitId:id,...base})}
+ $('chargeTitle').value='';$('chargeAmount').value='';$('chargeDesc').value='';$('chargeDate').value=today();save()
+}
+function addPayment(){
+ const id=$('payUnit').value,amount=num($('payAmount').value),date=normalizeJalali($('payDate').value);if(!id||amount<=0)return alert('واحد و مبلغ را وارد کنید');if(!date)return alert('تاریخ شمسی را به شکل 1405/05/21 وارد کنید');
+ db.payments.push({id:uid(),unitId:id,amount,date,method:$('payMethod').value,ref:$('payRef').value.trim(),desc:$('payDesc').value.trim()});
+ $('payAmount').value='';$('payRef').value='';$('payDesc').value='';$('payDate').value=today();save()
+}
+function addExpense(){
+ const amount=num($('expAmount').value),date=normalizeJalali($('expDate').value);if(amount<=0)return alert('مبلغ هزینه را وارد کنید');if(!date)return alert('تاریخ شمسی را به شکل 1405/05/21 وارد کنید');
+ db.expenses.push({id:uid(),amount,date,category:$('expCategory').value,desc:$('expDesc').value.trim(),payments:[]});
+ $('expAmount').value='';$('expDesc').value='';$('expDate').value=today();save()
+}
+
+function openEdit(kind,id){
+ editCtx={kind,id};const x=db[kind].find(v=>v.id===id);if(!x)return;$('editModal').classList.remove('hidden');let h='';
+ if(kind==='units'){
+  $('editTitle').textContent='ویرایش واحد';
+  h=`<label>شماره واحد</label><input id="eNo" value="${esc(x.no)}"><label>طبقه</label><input id="eFloor" value="${esc(x.floor||'')}"><label>تعداد نفرات</label><input id="ePeople" type="number" value="${x.people||1}"><label>نام مالک</label><input id="eOwner" value="${esc(x.owner||'')}"><label>نام ساکن</label><input id="eResident" value="${esc(x.resident||'')}"><label>تلفن</label><input id="ePhone" value="${esc(x.phone||'')}"><label>مانده اولیه</label><input id="eOpening" type="number" value="${Math.abs(num(x.opening))}"><label>نوع مانده</label><select id="eOpeningType"><option value="debt" ${num(x.opening)>=0?'selected':''}>بدهکار</option><option value="credit" ${num(x.opening)<0?'selected':''}>بستانکار</option></select>`;
+ }
+ if(kind==='charges'){
+  $('editTitle').textContent='ویرایش شارژ';
+  h=`<label>عنوان</label><input id="eTitle" value="${esc(x.title)}"><label>مبلغ</label><input id="eAmount" type="number" value="${x.amount}"><label>تاریخ شمسی</label><input id="eDate" value="${x.date}"><label>واحد</label><select id="eUnit">${db.units.map(u=>`<option value="${u.id}" ${u.id===x.unitId?'selected':''}>واحد ${esc(u.no)}</option>`).join('')}</select><label>شرح</label><textarea id="eDesc">${esc(x.desc||'')}</textarea>`;
+ }
+ if(kind==='payments'){
+  $('editTitle').textContent='ویرایش پرداخت';
+  h=`<label>واحد</label><select id="eUnit">${db.units.map(u=>`<option value="${u.id}" ${u.id===x.unitId?'selected':''}>واحد ${esc(u.no)}</option>`).join('')}</select><label>مبلغ</label><input id="eAmount" type="number" value="${x.amount}"><label>تاریخ شمسی</label><input id="eDate" value="${x.date}"><label>روش پرداخت</label><select id="eMethod">${['کارت','انتقال بانکی','نقد','سایر'].map(m=>`<option ${m===x.method?'selected':''}>${m}</option>`).join('')}</select><label>شماره پیگیری</label><input id="eRef" value="${esc(x.ref||'')}"><label>شرح</label><textarea id="eDesc">${esc(x.desc||'')}</textarea>`;
+ }
+ if(kind==='expenses'){
+  $('editTitle').textContent='ویرایش هزینه';
+  h=`<label>مبلغ</label><input id="eAmount" type="number" value="${x.amount}"><label>تاریخ شمسی</label><input id="eDate" value="${x.date}"><label>دسته‌بندی</label><select id="eCategory">${['نظافت','آسانسور','برق','آب','گاز','تعمیرات','نگهبانی','بیمه','سایر'].map(m=>`<option ${m===x.category?'selected':''}>${m}</option>`).join('')}</select><label>شرح</label><textarea id="eDesc">${esc(x.desc||'')}</textarea>`;
+ }
+ $('editFields').innerHTML=h
+}
+function closeEdit(){$('editModal').classList.add('hidden');editCtx=null}
+function saveEdit(){
+ if(!editCtx)return;const x=db[editCtx.kind].find(v=>v.id===editCtx.id);if(!x)return;
+ if(editCtx.kind==='units'){
+  const no=$('eNo').value.trim();if(!no)return alert('شماره واحد الزامی است');if(db.units.some(u=>u.id!==x.id&&u.no===no))return alert('این شماره واحد قبلاً ثبت شده');
+  let opening=Math.abs(num($('eOpening').value));if($('eOpeningType').value==='credit')opening=-opening;
+  Object.assign(x,{no,floor:$('eFloor').value.trim(),people:num($('ePeople').value)||1,owner:$('eOwner').value.trim(),resident:$('eResident').value.trim(),phone:$('ePhone').value.trim(),opening});
+ }
+ if(editCtx.kind==='charges'){
+  const date=normalizeJalali($('eDate').value);if(!date)return alert('تاریخ شمسی نامعتبر است');
+  Object.assign(x,{title:$('eTitle').value.trim(),amount:num($('eAmount').value),date,unitId:$('eUnit').value,desc:$('eDesc').value.trim()});
+ }
+ if(editCtx.kind==='payments'){
+  const date=normalizeJalali($('eDate').value);if(!date)return alert('تاریخ شمسی نامعتبر است');
+  Object.assign(x,{unitId:$('eUnit').value,amount:num($('eAmount').value),date,method:$('eMethod').value,ref:$('eRef').value.trim(),desc:$('eDesc').value.trim()});
+ }
+ if(editCtx.kind==='expenses'){
+  const date=normalizeJalali($('eDate').value);if(!date)return alert('تاریخ شمسی نامعتبر است');
+  Object.assign(x,{amount:num($('eAmount').value),date,category:$('eCategory').value,desc:$('eDesc').value.trim()});
+ }
+ closeEdit();save()
+}
+function del(kind,id){
+ const labels={units:'واحد',charges:'شارژ',payments:'پرداخت',expenses:'هزینه'};
+ if(kind==='units'&&(db.charges.some(x=>x.unitId===id)||db.payments.some(x=>x.unitId===id)))return alert('برای این واحد سابقه مالی وجود دارد؛ ابتدا سوابق مالی آن را بررسی کنید.');
+ if(confirm(`${labels[kind]} حذف شود؟`)){db[kind]=db[kind].filter(x=>x.id!==id);save()}
+}
+
+
+function unitSortValue(id){const u=db.units.find(x=>x.id===id);const m=String(u?.no||'').match(/\d+/);return m?Number(m[0]):999999}
+function sortedRecords(list,mode){
+ const a=[...list];
+ if(mode==='date_asc')return a.sort((x,y)=>String(x.date||'').localeCompare(String(y.date||'')));
+ if(mode==='date_desc')return a.sort((x,y)=>String(y.date||'').localeCompare(String(x.date||'')));
+ if(mode==='amount_asc')return a.sort((x,y)=>num(x.amount)-num(y.amount));
+ if(mode==='amount_desc')return a.sort((x,y)=>num(y.amount)-num(x.amount));
+ if(mode==='unit_asc')return a.sort((x,y)=>unitSortValue(x.unitId)-unitSortValue(y.unitId));
+ if(mode==='unit_desc')return a.sort((x,y)=>unitSortValue(y.unitId)-unitSortValue(x.unitId));
+ if(mode==='status')return a.sort((x,y)=>(({unpaid:0,partial:1,paid:2}[expenseStatus(x)]||0)-({unpaid:0,partial:1,paid:2}[expenseStatus(y)]||0)) || String(y.date||'').localeCompare(String(x.date||'')));
+ return a;
+}
+
+function renderUnits(){
+ $('unitsBody').innerHTML=db.units.map(u=>`<tr><td>واحد ${esc(u.no)}${u.floor?` - طبقه ${esc(u.floor)}`:''}</td><td>${esc(u.owner||'-')} / ${esc(u.resident||'-')}</td><td>${esc(u.phone||'-')}</td><td>${badge(balance(u.id))}</td><td><div class="actions"><button class="btn secondary" onclick="openEdit('units','${u.id}')">ویرایش</button><button class="btn danger" onclick="del('units','${u.id}')">حذف</button></div></td></tr>`).join('')||'<tr><td colspan="5">واحدی ثبت نشده است.</td></tr>'
+}
+function renderCharges(){
+ $('chargesBody').innerHTML=sortedRecords(db.charges,$('chargeSort')?.value||'date_desc').map(x=>`<tr><td>${x.date}</td><td>${esc(x.title)}</td><td>${unitLabel(x.unitId)}</td><td>${fmt(x.amount)}</td><td>${esc(x.desc||'')}</td><td><div class="actions"><button class="btn secondary" onclick="openEdit('charges','${x.id}')">ویرایش</button><button class="btn danger" onclick="del('charges','${x.id}')">حذف</button></div></td></tr>`).join('')||'<tr><td colspan="6">شارژی ثبت نشده است.</td></tr>'
+}
+function renderPayments(){
+ $('paymentsBody').innerHTML=sortedRecords(db.payments,$('paymentSort')?.value||'date_desc').map(x=>`<tr><td>${x.date}</td><td>${unitLabel(x.unitId)}</td><td>${fmt(x.amount)}</td><td>${esc(x.method||'')}</td><td>${esc(x.ref||'')}</td><td>${esc(x.desc||'')}</td><td><div class="actions"><button class="btn secondary" onclick="openEdit('payments','${x.id}')">ویرایش</button><button class="btn danger" onclick="del('payments','${x.id}')">حذف</button></div></td></tr>`).join('')||'<tr><td colspan="7">پرداختی ثبت نشده است.</td></tr>'
+}
+
+
+function expensePaidTotal(x){return (x.payments||[]).reduce((a,p)=>a+num(p.amount),0)}
+function expenseRemaining(x){return Math.max(0,num(x.amount)-expensePaidTotal(x))}
+function expenseStatus(x){
+ const paid=expensePaidTotal(x),total=num(x.amount);
+ if(paid<=0)return 'unpaid';
+ if(paid>=total)return 'paid';
+ return 'partial';
+}
+
+function openPayExpense(id){
+ const x=db.expenses.find(e=>e.id===id);if(!x)return;
+ $('payExpenseId').value=id;
+ $('payExpenseMode').value='partial';
+ $('payExpenseDate').value=today();
+ $('payExpenseDesc').value='';
+ $('payExpenseAmount').value='';
+ const paid=expensePaidTotal(x),remaining=expenseRemaining(x);
+ $('payExpenseInfo').innerHTML=`<b>${esc(x.category)}</b><br>مبلغ کل: ${fmt(x.amount)}<br>پرداخت‌شده: ${fmt(paid)}<br>مانده: ${fmt(remaining)}<br>شرح: ${esc(x.desc||'-')}`;
+ toggleExpensePayMode();
+ renderExpensePaymentHistory(x);
+ $('payExpenseModal').classList.remove('hidden');
+}
+function closePayExpense(){
+ $('payExpenseModal').classList.add('hidden');
+ $('payExpenseId').value='';$('payExpenseDesc').value='';$('payExpenseAmount').value='';
+}
+function toggleExpensePayMode(){
+ const id=$('payExpenseId').value,x=db.expenses.find(e=>e.id===id);
+ const all=$('payExpenseMode').value==='all';
+ $('payExpenseAmountWrap').style.display=all?'none':'block';
+ if(all&&x)$('payExpenseAmount').value=expenseRemaining(x);
+}
+function confirmPayExpense(){
+ const id=$('payExpenseId').value,x=db.expenses.find(e=>e.id===id);if(!x)return;
+ const date=normalizeJalali($('payExpenseDate').value);if(!date)return alert('تاریخ پرداخت شمسی نامعتبر است');
+ const remaining=expenseRemaining(x);
+ if(remaining<=0)return alert('این هزینه به طور کامل پرداخت شده است.');
+ let amount=$('payExpenseMode').value==='all'?remaining:num($('payExpenseAmount').value);
+ if(amount<=0)return alert('مبلغ این پرداخت را وارد کنید');
+ if(amount>remaining)return alert('مبلغ پرداخت نمی‌تواند بیشتر از مانده هزینه باشد');
+ const desc=$('payExpenseDesc').value.trim();
+ if(!desc)return alert('توضیحات پرداخت را وارد کنید');
+ if(!Array.isArray(x.payments))x.payments=[];
+ x.payments.push({id:uid(),amount,date,desc});
+ save();
+ openPayExpense(id);
+ $('payExpenseDesc').value='';
+}
+function renderExpensePaymentHistory(x){
+ const body=$('expensePaymentsBody');if(!body)return;
+ body.innerHTML=[...(x.payments||[])].reverse().map(p=>`<tr><td>${p.date}</td><td>${fmt(p.amount)}</td><td>${esc(p.desc||'')}</td><td><button class="btn danger" onclick="deleteExpensePayment('${x.id}','${p.id}')">حذف</button></td></tr>`).join('')||'<tr><td colspan="4" class="empty">هنوز پرداختی ثبت نشده است.</td></tr>';
+}
+function deleteExpensePayment(expenseId,paymentId){
+ const x=db.expenses.find(e=>e.id===expenseId);if(!x)return;
+ if(!confirm('این ردیف پرداخت حذف شود؟ مبلغ به مانده صندوق برمی‌گردد.'))return;
+ x.payments=(x.payments||[]).filter(p=>p.id!==paymentId);
+ save();openPayExpense(expenseId);
+}
+
+function renderExpenses(){
+ const list=sortedRecords(db.expenses,$('expenseSort')?.value||'date_desc');
+ $('expensesBody').innerHTML=list.map(x=>{
+   const paid=expensePaidTotal(x),rem=expenseRemaining(x),st=expenseStatus(x);
+   const statusHtml=st==='paid'?'<span class="badge paid-badge">تسویه‌شده</span>':st==='partial'?'<span class="badge btn-warn">بخشی پرداخت‌شده</span>':'<span class="badge unpaid-badge">پرداخت‌نشده</span>';
+   const last=[...(x.payments||[])].sort((a,b)=>String(b.date).localeCompare(String(a.date)))[0];
+   return `<tr>
+   <td>${x.date}</td>
+   <td>${esc(x.category)}</td>
+   <td>${fmt(x.amount)}</td>
+   <td>${esc(x.desc||'')}</td>
+   <td>${statusHtml}<br><small>پرداخت: ${fmt(paid)} | مانده: ${fmt(rem)}</small></td>
+   <td>${last?esc(last.date):'-'}</td>
+   <td>${last?esc(last.desc||'-'):'-'}</td>
+   <td><div class="actions">
+     ${rem>0?`<button class="btn ok" onclick="openPayExpense('${x.id}')">پرداخت هزینه</button>`:`<button class="btn secondary" onclick="openPayExpense('${x.id}')">سوابق پرداخت</button>`}
+     <button class="btn secondary" onclick="openEdit('expenses','${x.id}')">ویرایش</button>
+     <button class="btn danger" onclick="del('expenses','${x.id}')">حذف</button>
+   </div></td></tr>`;
+ }).join('')||'<tr><td colspan="8">هزینه‌ای ثبت نشده است.</td></tr>'
+}
+function renderSelects(){
+ const opts=db.units.map(u=>`<option value="${u.id}">واحد ${esc(u.no)}</option>`).join('');
+ ['chargeUnit','payUnit','statementUnit'].forEach(id=>{const old=$(id).value;$(id).innerHTML='<option value="">انتخاب واحد</option>'+opts;if([...$(id).options].some(o=>o.value===old))$(id).value=old})
+}
+function renderStatement(){
+ const id=$('statementUnit').value;if(!id){$('statementBody').innerHTML='<tr><td colspan="6">یک واحد را انتخاب کنید.</td></tr>';$('statementSummary').textContent='';return}
+ const u=db.units.find(x=>x.id===id),rows=[];
+ if(num(u.opening)!==0)rows.push({date:'-',sort:'0000/00/00',type:'مانده اولیه',desc:'ابتدای دوره',debt:u.opening>0?u.opening:0,credit:u.opening<0?Math.abs(u.opening):0});
+ db.charges.filter(x=>x.unitId===id).forEach(x=>rows.push({date:x.date,sort:x.date,type:'شارژ',desc:x.title+(x.desc?' - '+x.desc:''),debt:x.amount,credit:0}));
+ db.payments.filter(x=>x.unitId===id).forEach(x=>rows.push({date:x.date,sort:x.date,type:'پرداخت',desc:x.desc||x.method,debt:0,credit:x.amount}));
+ rows.sort((a,b)=>a.sort.localeCompare(b.sort));let b=0;
+ $('statementBody').innerHTML=rows.map(r=>{b+=num(r.debt)-num(r.credit);return `<tr><td>${r.date}</td><td>${r.type}</td><td>${esc(r.desc)}</td><td>${r.debt?fmt(r.debt):'-'}</td><td>${r.credit?fmt(r.credit):'-'}</td><td>${b>0?'بدهکار '+fmt(b):b<0?'بستانکار '+fmt(Math.abs(b)):'تسویه'}</td></tr>`}).join('')||'<tr><td colspan="6">گردش حسابی وجود ندارد.</td></tr>';
+ $('statementSummary').innerHTML=`واحد ${esc(u.no)} — وضعیت فعلی: ${badge(balance(id))}`
+}
+function renderKpis(){
+ const bals=db.units.map(u=>balance(u.id));$('kDebt').textContent=fmt(bals.filter(x=>x>0).reduce((a,b)=>a+b,0));$('kCredit').textContent=fmt(Math.abs(bals.filter(x=>x<0).reduce((a,b)=>a+b,0)));
+ const pays=db.payments.reduce((a,b)=>a+num(b.amount),0),exPaid=db.expenses.reduce((a,x)=>a+expensePaidTotal(x),0),exAll=db.expenses.reduce((a,b)=>a+num(b.amount),0);$('kFund').textContent=fmt(pays-exPaid);$('kExpense').textContent=fmt(exAll)
+}
+
+function accountTransactions(unitId){
+ const u=db.units.find(x=>x.id===unitId); if(!u)return [];
+ const rows=[];
+ if(num(u.opening)!==0)rows.push({date:'-',sort:'0000/00/00',type:'مانده اولیه',desc:'مانده ابتدای دوره',debt:u.opening>0?u.opening:0,credit:u.opening<0?Math.abs(u.opening):0});
+ db.charges.filter(x=>x.unitId===unitId).forEach(x=>rows.push({date:x.date,sort:x.date,type:'شارژ',desc:x.title+(x.desc?' - '+x.desc:''),debt:num(x.amount),credit:0}));
+ db.payments.filter(x=>x.unitId===unitId).forEach(x=>rows.push({date:x.date,sort:x.date,type:'پرداخت',desc:(x.desc||x.method)+(x.ref?' - پیگیری '+x.ref:''),debt:0,credit:num(x.amount)}));
+ rows.sort((a,b)=>a.sort.localeCompare(b.sort));
+ let bal=0;
+ return rows.map(r=>{bal+=num(r.debt)-num(r.credit);return {...r,balance:bal}});
+}
+function openAccountCard(unitId){
+ selectedAccountUnitId=unitId;
+ $('accountFromDate').value='';$('accountToDate').value='';
+ $('accountModal').classList.remove('hidden');
+ renderAccountCard();
+}
+function closeAccountCard(){$('accountModal').classList.add('hidden');selectedAccountUnitId=null}
+function clearAccountFilter(){$('accountFromDate').value='';$('accountToDate').value='';renderAccountCard()}
+function renderAccountCard(){
+ if(!selectedAccountUnitId)return;
+ const u=db.units.find(x=>x.id===selectedAccountUnitId); if(!u)return;
+ const fromRaw=$('accountFromDate').value.trim(),toRaw=$('accountToDate').value.trim();
+ const from=fromRaw?normalizeJalali(fromRaw):null,to=toRaw?normalizeJalali(toRaw):null;
+ if(fromRaw&&!from)return alert('تاریخ شروع معتبر نیست');
+ if(toRaw&&!to)return alert('تاریخ پایان معتبر نیست');
+ const all=accountTransactions(u.id);
+ let filtered=all.filter(r=>{
+   if(r.date==='-')return !from && !to;
+   if(from && r.date<from)return false;
+   if(to && r.date>to)return false;
+   return true;
+ });
+ const sm=$('accountSort')?.value||'date_asc';
+ if(sm==='date_desc')filtered.sort((a,b)=>String(b.sort).localeCompare(String(a.sort)));
+ else if(sm==='date_asc')filtered.sort((a,b)=>String(a.sort).localeCompare(String(b.sort)));
+ else if(sm==='debit_desc')filtered.sort((a,b)=>num(b.debt)-num(a.debt));
+ else if(sm==='credit_desc')filtered.sort((a,b)=>num(b.credit)-num(a.credit));
+ $('accountTitle').textContent=`کارت حساب واحد ${u.no}`;
+ $('accountPrintTitle').textContent=`کارت حساب واحد ${u.no}`;
+ $('accountSubtitle').textContent=`مالک: ${u.owner||'-'} | ساکن: ${u.resident||'-'} | تماس: ${u.phone||'-'}`;
+ $('accountSummaryGrid').innerHTML=`
+   <div class="account-summary-item"><span>مانده فعلی</span><b>${unitBalance(u.id)>0?'بدهکار '+fmt(unitBalance(u.id)):unitBalance(u.id)<0?'بستانکار '+fmt(Math.abs(unitBalance(u.id))):'تسویه'}</b></div>
+   <div class="account-summary-item"><span>جمع شارژها</span><b>${fmt(unitCharges(u.id))}</b></div>
+   <div class="account-summary-item"><span>جمع پرداخت‌ها</span><b>${fmt(unitPayments(u.id))}</b></div>
+   <div class="account-summary-item"><span>مانده اولیه</span><b>${u.opening>0?'بدهکار '+fmt(u.opening):u.opening<0?'بستانکار '+fmt(Math.abs(u.opening)):'صفر'}</b></div>`;
+ $('accountBody').innerHTML=filtered.map(r=>`<tr><td>${r.date}</td><td>${r.type}</td><td>${esc(r.desc)}</td><td>${r.debt?fmt(r.debt):'-'}</td><td>${r.credit?fmt(r.credit):'-'}</td><td>${r.balance>0?'بدهکار '+fmt(r.balance):r.balance<0?'بستانکار '+fmt(Math.abs(r.balance)):'تسویه'}</td></tr>`).join('')||'<tr><td colspan="6" class="empty">تراکنشی در این بازه وجود ندارد.</td></tr>';
+}
+function exportAccountCSV(){
+ if(!selectedAccountUnitId)return;
+ const u=db.units.find(x=>x.id===selectedAccountUnitId); if(!u)return;
+ const fromRaw=$('accountFromDate').value.trim(),toRaw=$('accountToDate').value.trim();
+ const from=fromRaw?normalizeJalali(fromRaw):null,to=toRaw?normalizeJalali(toRaw):null;
+ const rows=accountTransactions(u.id).filter(r=>{
+   if(r.date==='-')return !from && !to;
+   if(from && r.date<from)return false;if(to && r.date>to)return false;return true;
+ });
+ const data=[['کارت حساب واحد '+u.no],['مالک',u.owner||''],['ساکن',u.resident||''],['مانده فعلی',unitBalance(u.id)],[],['تاریخ','نوع تراکنش','شرح','بدهکار','بستانکار','مانده'],...rows.map(r=>[r.date,r.type,r.desc,r.debt||'',r.credit||'',r.balance])];
+ const csv='\ufeff'+data.map(r=>r.map(csvCell).join(',')).join('\n');
+ const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);a.download=`کارت-حساب-واحد-${u.no}.csv`;a.click();URL.revokeObjectURL(a.href);
+}
+function printAccountCard(){
+ const original=document.body.innerHTML, printable=$('accountPrintable').outerHTML;
+ document.body.innerHTML=printable;
+ window.print();
+ document.body.innerHTML=original;
+ location.reload();
+}
+
+function renderAll(){renderUnits();renderSelects();renderCharges();renderPayments();renderExpenses();renderStatement();renderKpis()}
+
+$('chargeTarget').onchange=()=>$('chargeUnitWrap').style.display=$('chargeTarget').value==='single'?'block':'none';
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.page).classList.add('active')});
+
+function exportBackup(){const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='kh17-backup.json';a.click();URL.revokeObjectURL(a.href)}
+function importBackup(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(!x.units||!x.charges||!x.payments||!x.expenses)throw 0;db=x;migrateLegacyUnitFields();migrateDates();migrateExpensePayments();save();alert('بازیابی انجام شد')}catch{alert('فایل معتبر نیست')}};r.readAsText(f);e.target.value=''}
+function exportCSV(){
+ const rows=[['واحدها'],['واحد','مالک','ساکن','مانده'],...db.units.map(u=>[u.no,u.owner,u.resident,balance(u.id)]),[],['شارژها'],['تاریخ','عنوان','واحد','مبلغ','شرح'],...db.charges.map(x=>[x.date,x.title,unitLabel(x.unitId),x.amount,x.desc]),[],['پرداخت‌ها'],['تاریخ','واحد','مبلغ','روش','پیگیری','شرح'],...db.payments.map(x=>[x.date,unitLabel(x.unitId),x.amount,x.method,x.ref,x.desc]),[],['هزینه‌ها'],['تاریخ ثبت','دسته‌بندی','مبلغ کل','شرح','جمع پرداخت‌شده','مانده','وضعیت'],...db.expenses.map(x=>[x.date,x.category,x.amount,x.desc,expensePaidTotal(x),expenseRemaining(x),expenseStatus(x)==='paid'?'تسویه‌شده':expenseStatus(x)==='partial'?'بخشی پرداخت‌شده':'پرداخت‌نشده']),[],['ریز پرداخت هزینه‌ها'],['دسته هزینه','تاریخ پرداخت','مبلغ پرداخت','توضیحات'],...db.expenses.flatMap(x=>(x.payments||[]).map(p=>[x.category,p.date,p.amount,p.desc]))];
+ const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n'),blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='kh17-report.csv';a.click();URL.revokeObjectURL(a.href)
+}
+renderAll();
+</script>
+</body>
+</html>
