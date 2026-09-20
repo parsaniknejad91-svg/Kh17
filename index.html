@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f4c81">
+<title>Kh17 | مدیریت شارژ ساختمان</title>
+<style>
+:root{--bg:#f3f6f9;--card:#fff;--text:#18212f;--muted:#667085;--line:#e4e7ec;--primary:#0f4c81;--danger:#b42318;--ok:#067647;--warn:#b54708}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer}.app{max-width:1200px;margin:auto;padding:16px 16px 90px}
+.header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}.header h1{margin:0;font-size:23px}.header p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.btn{border:0;border-radius:10px;padding:9px 12px;font-weight:700}.primary{background:var(--primary);color:#fff}.secondary{background:#e9f0f6;color:#173b63}.danger{background:#fee4e2;color:var(--danger)}.ok{background:#dcfae6;color:var(--ok)}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:14px;box-shadow:0 2px 10px rgba(16,24,40,.04)}.c3{grid-column:span 3}.c4{grid-column:span 4}.c8{grid-column:span 8}
+.kpi span{font-size:12px;color:var(--muted)}.kpi b{display:block;font-size:21px;margin-top:7px}.tabs{display:flex;gap:8px;overflow:auto;margin:14px 0 12px}.tab{white-space:nowrap;border:1px solid var(--line);background:#fff;padding:9px 12px;border-radius:10px}.tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.page{display:none}.page.active{display:block}.row{display:grid;grid-template-columns:repeat(12,1fr);gap:10px}.f4{grid-column:span 4}.f6{grid-column:span 6}.f12{grid-column:span 12}
+label{display:block;font-size:13px;color:#344054;margin-bottom:5px}input,select,textarea{width:100%;border:1px solid #d0d5dd;border-radius:10px;padding:10px;background:#fff}textarea{min-height:80px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px;max-height:500px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:9px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}th{background:#f9fafb;position:sticky;top:0}
+.badge{display:inline-flex;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:800}.debt{background:#fee4e2;color:#b42318}.credit{background:#dcfae6;color:#067647}.zero{background:#eaecf0;color:#475467}
+.section-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}.section-head h3,.card h3{margin:0;font-size:17px}.actions{display:flex;gap:6px;flex-wrap:wrap}.actions .btn{padding:6px 8px;font-size:12px}.note{font-size:12px;color:var(--muted);line-height:1.7}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.42);display:grid;place-items:center;padding:16px;z-index:99}.modal.hidden{display:none}.modal-card{width:min(100%,540px);background:#fff;border-radius:16px;padding:16px;max-height:90vh;overflow:auto}
+@media(max-width:800px){.c3,.c4,.c8{grid-column:span 12}.f4,.f6{grid-column:span 12}.grid.kpis{grid-template-columns:repeat(2,1fr)}.grid.kpis>.c3{grid-column:auto}.header{align-items:flex-start;flex-direction:column}}
+
+.paid-badge{background:#d1fae5;color:#065f46}
+.unpaid-badge{background:#fef3c7;color:#92400e}
+.pay-expense-modal,.account-modal{position:fixed;inset:0;background:rgba(15,23,42,.52);display:grid;place-items:center;padding:16px;z-index:110}
+.pay-expense-modal.hidden,.account-modal.hidden{display:none}
+.pay-expense-card{width:min(100%,500px);background:#fff;border-radius:18px;padding:16px;max-height:92vh;overflow:auto}
+.expense-payment-note{font-size:12px;color:var(--muted);line-height:1.7}
+.account-modal-card{width:min(100%,980px);max-height:92vh;overflow:auto;background:#fff;border-radius:18px;padding:16px}
+.account-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.account-summary-item{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:12px}
+.account-summary-item span{display:block;font-size:12px;color:var(--muted)}
+.account-summary-item b{display:block;margin-top:6px;font-size:17px}
+.account-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.account-toolbar input{width:auto;min-width:145px}
+.account-print-title{display:none}
+@media(max-width:800px){.account-summary-grid{grid-template-columns:repeat(2,1fr)}.account-toolbar input,.account-toolbar button{width:100%}}
+
+
+.hidden{display:none!important}
+.auth-shell{min-height:100vh;display:grid;place-items:center;padding:20px;background:linear-gradient(145deg,#eef4f9,#f9fafb)}
+.auth-card{width:min(100%,420px);background:#fff;border:1px solid var(--line);border-radius:22px;padding:28px;box-shadow:0 20px 60px rgba(15,76,129,.12)}
+.auth-brand{width:60px;height:60px;border-radius:18px;background:var(--primary);color:#fff;display:grid;place-items:center;margin:0 auto 12px;font-weight:900;font-size:26px}
+.auth-card h1{text-align:center;margin:0}.auth-card p{text-align:center;color:var(--muted);font-size:13px;margin:6px 0 20px}
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#101828;color:#fff;padding:10px 14px;border-radius:10px;z-index:999;opacity:0;pointer-events:none;transition:.2s}.toast.show{opacity:1}
+
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+<section id="loginView" class="auth-shell">
+  <div class="auth-card">
+    <div class="auth-brand">K</div>
+    <h1>Kh17</h1>
+    <p>سامانه آنلاین مدیریت شارژ ساختمان</p>
+    <form id="loginForm">
+      <label>ایمیل</label>
+      <input id="loginEmail" type="email" autocomplete="username" required>
+      <label>رمز عبور</label>
+      <input id="loginPassword" type="password" autocomplete="current-password" required>
+      <button class="btn primary" type="submit" style="width:100%;margin-top:6px">ورود</button>
+    </form>
+  </div>
+</section>
+
+<div id="appView" class="app hidden">
+<div class="header">
+ <div><h1 id="buildingTitle">Kh17</h1><p id="userInfo">مدیریت شارژ ساختمان</p></div>
+ <div class="actions">
+  <button class="btn secondary" onclick="exportBackup()">پشتیبان</button>
+  <label class="btn secondary" style="cursor:pointer">بازیابی<input type="file" accept=".json" onchange="importBackup(event)" hidden></label>
+  <button class="btn ok" onclick="exportCSV()">خروجی اکسل</button><button class="btn secondary" onclick="logout()">خروج</button>
+ </div>
+</div>
+
+<div class="grid kpis">
+ <div class="card c3 kpi"><span>جمع بدهی واحدها</span><b id="kDebt">۰</b></div>
+ <div class="card c3 kpi"><span>جمع بستانکاری</span><b id="kCredit">۰</b></div>
+ <div class="card c3 kpi"><span>موجودی صندوق</span><b id="kFund">۰</b></div>
+ <div class="card c3 kpi"><span>مجموع هزینه‌های ثبت‌شده</span><b id="kExpense">۰</b></div>
+</div>
+
+<div class="tabs">
+ <button class="tab active" data-page="units">واحدها</button>
+ <button class="tab" data-page="charges">شارژها</button>
+ <button class="tab" data-page="payments">پرداخت‌ها</button>
+ <button class="tab" data-page="expenses">هزینه‌ها</button>
+ <button class="tab" data-page="statement">صورت‌حساب</button>
+</div>
+
+<section id="units" class="page active">
+<div class="grid">
+ <div class="card c4 admin-only">
+  <h3>ثبت واحد</h3><br>
+  <div class="row">
+   <div class="f4"><label>شماره واحد</label><input id="unitNo"></div>
+   <div class="f4"><label>طبقه</label><input id="unitFloor"></div>
+   <div class="f4"><label>تعداد نفرات</label><input id="unitPeople" type="number" value="1"></div>
+   <div class="f6"><label>نام مالک</label><input id="unitOwner"></div>
+   <div class="f6"><label>نام ساکن</label><input id="unitResident"></div>
+   <div class="f6"><label>تلفن</label><input id="unitPhone"></div>
+   <div class="f6"><label>مانده اولیه</label><input id="unitOpening" type="number" value="0"></div>
+   <div class="f12"><label>نوع مانده</label><select id="unitOpeningType"><option value="debt">بدهکار</option><option value="credit">بستانکار</option></select></div>
+   <div class="f12"><button class="btn primary" style="width:100%" onclick="addUnit()">ثبت واحد</button></div>
+  </div>
+ </div>
+ <div class="card c8">
+  <div class="section-head"><h3>واحدها</h3></div>
+  <div class="table-wrap"><table><thead><tr><th>واحد</th><th>مالک / ساکن</th><th>تلفن</th><th>مانده</th><th>عملیات</th></tr></thead><tbody id="unitsBody"></tbody></table></div>
+ </div>
+</div>
+</section>
+
+<section id="charges" class="page">
+<div class="grid">
+ <div class="card c4 admin-only">
+  <h3>ثبت شارژ</h3><br>
+  <div class="row">
+   <div class="f12"><label>عنوان</label><input id="chargeTitle" placeholder="شارژ مرداد ۱۴۰۵"></div>
+   <div class="f6"><label>مبلغ</label><input id="chargeAmount" type="number"></div>
+   <div class="f6"><label>تاریخ شمسی</label><input id="chargeDate" placeholder="1405/05/21"></div>
+   <div class="f12"><label>اعمال برای</label><select id="chargeTarget"><option value="all">همه واحدها</option><option value="single">یک واحد</option></select></div>
+   <div class="f12" id="chargeUnitWrap" style="display:none"><label>واحد</label><select id="chargeUnit"></select></div>
+   <div class="f12"><label>شرح</label><textarea id="chargeDesc"></textarea></div>
+   <div class="f12"><button class="btn primary" style="width:100%" onclick="addCharge()">ثبت شارژ</button></div>
+  </div>
+ </div>
+ <div class="card c8">
+  <div class="section-head"><h3>سوابق شارژها</h3><select id="chargeSort" onchange="renderCharges()" style="width:auto"><option value="date_desc">تاریخ: جدید به قدیم</option><option value="date_asc">تاریخ: قدیم به جدید</option><option value="amount_desc">مبلغ: زیاد به کم</option><option value="amount_asc">مبلغ: کم به زیاد</option><option value="unit_asc">واحد: صعودی</option><option value="unit_desc">واحد: نزولی</option></select></div><div class="table-wrap"><table><thead><tr><th>تاریخ</th><th>عنوان</th><th>واحد</th><th>مبلغ</th><th>شرح</th><th>عملیات</th></tr></thead><tbody id="chargesBody"></tbody></table></div>
+ </div>
+</div>
+</section>
+
+<section id="payments" class="page">
+<div class="grid">
+ <div class="card c4 admin-only">
+  <h3>ثبت پرداخت</h3><br>
+  <div class="row">
+   <div class="f12"><label>واحد</label><select id="payUnit"></select></div>
+   <div class="f6"><label>مبلغ</label><input id="payAmount" type="number"></div>
+   <div class="f6"><label>تاریخ شمسی</label><input id="payDate" placeholder="1405/05/21"></div>
+   <div class="f6"><label>روش پرداخت</label><select id="payMethod"><option>کارت</option><option>انتقال بانکی</option><option>نقد</option><option>سایر</option></select></div>
+   <div class="f6"><label>شماره پیگیری</label><input id="payRef"></div>
+   <div class="f12"><label>شرح</label><textarea id="payDesc"></textarea></div>
+   <div class="f12"><button class="btn primary" style="width:100%" onclick="addPayment()">ثبت پرداخت</button></div>
+  </div>
+ </div>
+ <div class="card c8">
+  <div class="section-head"><h3>سوابق پرداخت‌ها</h3><select id="paymentSort" onchange="renderPayments()" style="width:auto"><option value="date_desc">تاریخ: جدید به قدیم</option><option value="date_asc">تاریخ: قدیم به جدید</option><option value="amount_desc">مبلغ: زیاد به کم</option><option value="amount_asc">مبلغ: کم به زیاد</option><option value="unit_asc">واحد: صعودی</option><option value="unit_desc">واحد: نزولی</option></select></div><div class="table-wrap"><table><thead><tr><th>تاریخ</th><th>واحد</th><th>مبلغ</th><th>روش</th><th>پیگیری</th><th>شرح</th><th>عملیات</th></tr></thead><tbody id="paymentsBody"></tbody></table></div>
+ </div>
+</div>
+</section>
+
+<section id="expenses" class="page">
+<div class="grid">
+ <div class="card c4 admin-only">
+  <h3>ثبت هزینه ساختمان</h3><br>
+  <div class="row">
+   <div class="f6"><label>مبلغ</label><input id="expAmount" type="number"></div>
+   <div class="f6"><label>تاریخ شمسی</label><input id="expDate" placeholder="1405/05/21"></div>
+   <div class="f12"><label>دسته‌بندی</label><select id="expCategory"><option>نظافت</option><option>آسانسور</option><option>برق</option><option>آب</option><option>گاز</option><option>تعمیرات</option><option>نگهبانی</option><option>بیمه</option><option>سایر</option></select></div>
+   <div class="f12"><label>شرح هزینه</label><textarea id="expDesc"></textarea></div>
+   <div class="f12"><button class="btn primary" style="width:100%" onclick="addExpense()">ثبت هزینه</button></div>
+  </div>
+ </div>
+ <div class="card c8">
+  <div class="section-head"><h3>سوابق هزینه‌ها</h3><select id="expenseSort" onchange="renderExpenses()" style="width:auto"><option value="date_desc">تاریخ: جدید به قدیم</option><option value="date_asc">تاریخ: قدیم به جدید</option><option value="amount_desc">مبلغ: زیاد به کم</option><option value="amount_asc">مبلغ: کم به زیاد</option><option value="status">وضعیت پرداخت</option></select></div><div class="table-wrap"><table><thead><tr><th>تاریخ ثبت</th><th>دسته‌بندی</th><th>مبلغ</th><th>شرح</th><th>وضعیت</th><th>تاریخ پرداخت</th><th>توضیحات پرداخت</th><th>عملیات</th></tr></thead><tbody id="expensesBody"></tbody></table></div>
+ </div>
+</div>
+</section>
+
+<section id="statement" class="page">
+<div class="card">
+ <div class="section-head"><h3>صورت‌حساب واحد</h3><select id="statementUnit" onchange="renderStatement()" style="max-width:240px"></select></div>
+ <div id="statementSummary" class="note" style="margin-bottom:10px"></div>
+ <div class="table-wrap"><table><thead><tr><th>تاریخ</th><th>نوع</th><th>شرح</th><th>بدهکار</th><th>بستانکار</th><th>مانده</th></tr></thead><tbody id="statementBody"></tbody></table></div>
+</div>
+</section>
+</div>
+
+<div id="editModal" class="modal hidden">
+ <div class="modal-card">
+  <div class="section-head"><h3 id="editTitle">ویرایش</h3><button class="btn secondary" onclick="closeEdit()">بستن</button></div>
+  <div id="editFields"></div>
+  <button class="btn primary" style="width:100%;margin-top:8px" onclick="saveEdit()">ذخیره تغییرات</button>
+ </div>
+</div>
+
+
+<div id="payExpenseModal" class="pay-expense-modal hidden">
+  <div class="pay-expense-card">
+    <div class="section-head">
+      <h3>پرداخت هزینه</h3>
+      <button class="btn secondary" type="button" onclick="closePayExpense()">بستن</button>
+    </div>
+    <div id="payExpenseInfo" class="expense-payment-note" style="margin-bottom:12px"></div>
+    <input type="hidden" id="payExpenseId">
+
+    <label>نوع پرداخت</label>
+    <select id="payExpenseMode" onchange="toggleExpensePayMode()">
+      <option value="partial">پرداخت بخشی از مبلغ</option>
+      <option value="all">پرداخت کل مانده</option>
+    </select>
+
+    <div id="payExpenseAmountWrap">
+      <label>مبلغ این پرداخت</label>
+      <input id="payExpenseAmount" type="number" min="1" inputmode="numeric">
+    </div>
+
+    <label>تاریخ پرداخت شمسی</label>
+    <input id="payExpenseDate" type="text" inputmode="numeric" placeholder="1405/05/21">
+
+    <label>توضیحات پرداخت</label>
+    <textarea id="payExpenseDesc" placeholder="مثلاً پرداخت مرحله اول حقوق نگهبان - شماره پیگیری 12345"></textarea>
+
+    <button class="btn primary" type="button" style="width:100%;margin-top:8px" onclick="confirmPayExpense()">ثبت این پرداخت</button>
+
+    <div style="margin-top:16px">
+      <div class="section-head"><h3 style="font-size:15px">سوابق پرداخت این هزینه</h3></div>
+      <div class="table-wrap" style="max-height:260px">
+        <table>
+          <thead><tr><th>تاریخ</th><th>مبلغ</th><th>توضیحات</th><th>عملیات</th></tr></thead>
+          <tbody id="expensePaymentsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="accountModal" class="account-modal hidden">
+  <div class="account-modal-card" id="accountPrintable">
+    <div class="section-head">
+      <div>
+        <h3 id="accountTitle">کارت حساب واحد</h3>
+        <div id="accountSubtitle" class="note"></div>
+      </div>
+      <button class="btn secondary no-print" type="button" onclick="closeAccountCard()">بستن</button>
+    </div>
+    <div class="account-print-title"><h2 id="accountPrintTitle">کارت حساب واحد</h2></div>
+    <div id="accountSummaryGrid" class="account-summary-grid"></div>
+    <div class="account-toolbar no-print" style="margin-bottom:12px">
+      <input id="accountFromDate" type="text" inputmode="numeric" placeholder="از تاریخ 1405/01/01">
+      <input id="accountToDate" type="text" inputmode="numeric" placeholder="تا تاریخ 1405/12/29">
+      <select id="accountSort" onchange="renderAccountCard()" style="width:auto"><option value="date_asc">تاریخ: قدیم به جدید</option><option value="date_desc">تاریخ: جدید به قدیم</option><option value="debit_desc">بدهکار: زیاد به کم</option><option value="credit_desc">بستانکار: زیاد به کم</option></select><button class="btn secondary" type="button" onclick="renderAccountCard()">اعمال فیلتر</button>
+      <button class="btn secondary" type="button" onclick="clearAccountFilter()">پاک کردن فیلتر</button>
+      <button class="btn ok" type="button" onclick="exportAccountCSV()">خروجی اکسل واحد</button>
+      <button class="btn secondary" type="button" onclick="printAccountCard()">چاپ / PDF</button>
+    </div>
+    <div class="table-wrap" style="max-height:520px">
+      <table>
+        <thead><tr><th>تاریخ</th><th>نوع تراکنش</th><th>شرح</th><th>بدهکار</th><th>بستانکار</th><th>مانده</th></tr></thead>
+        <tbody id="accountBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://rgjngbylvoegfxyoqxie.supabase.co";
+const SUPABASE_KEY="sb_publishable_UGQd63JruBr4BLv3Ililwg_XYVrPmUm";
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+const $=id=>document.getElementById(id);
+const num=v=>Number(v||0),fmt=v=>num(v).toLocaleString('fa-IR');
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+let state={session:null,profile:null,units:[],charges:[],payments:[],expenses:[],expensePayments:[],settings:null};
+let editCtx=null,selectedAccountUnitId=null;
+
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2300)}
+function isAdmin(){return state.profile?.role==='admin'}
+function latin(s){return String(s??'').replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d))}
+function todayJ(){const p=new Intl.DateTimeFormat('en-US-u-ca-persian',{year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()),g=t=>p.find(x=>x.type===t)?.value||'';return `${g('year')}/${g('month')}/${g('day')}`}
+function div(a,b){return Math.trunc(a/b)} function mod(a,b){return a-Math.trunc(a/b)*b}
+function j2g(jy,jm,jd){let jy2=jy-979,jm2=jm-1,jd2=jd-1,jdn=365*jy2+div(jy2,33)*8+div(mod(jy2,33)+3,4);for(let i=0;i<jm2;i++)jdn+=i<6?31:30;jdn+=jd2;let gdn=jdn+79,gy=1600+400*div(gdn,146097);gdn=mod(gdn,146097);let leap=true;if(gdn>=36525){gdn--;gy+=100*div(gdn,36524);gdn=mod(gdn,36524);if(gdn>=365)gdn++;else leap=false}gy+=4*div(gdn,1461);gdn=mod(gdn,1461);if(gdn>=366){leap=false;gdn--;gy+=div(gdn,365);gdn=mod(gdn,365)}const a=[0,31,((gy%4===0&&gy%100!==0)||gy%400===0)?29:28,31,30,31,30,31,31,30,31,30,31];let gm=1;for(;gm<=12&&gdn>=a[gm];gm++)gdn-=a[gm];return [gy,gm,gdn+1]}
+function g2j(gy,gm,gd){const dm=[0,31,59,90,120,151,181,212,243,273,304,334];let gy2=gy>1600?gy-1600:gy-621,jy=gy>1600?979:0,gy3=gm>2?gy2+1:gy2,days=365*gy2+div(gy3+3,4)-div(gy3+99,100)+div(gy3+399,400)-80+gd+dm[gm-1];jy+=33*div(days,12053);days=mod(days,12053);jy+=4*div(days,1461);days=mod(days,1461);if(days>365){jy+=div(days-1,365);days=mod(days-1,365)}return [jy,days<186?1+div(days,31):7+div(days-186,30),1+(days<186?mod(days,31):mod(days-186,30))]}
+function jToG(s){s=latin(s).trim().replace(/[-.]/g,'/');const m=s.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);if(!m)return null;const jy=+m[1],jm=+m[2],jd=+m[3];if(jy<1300||jy>1499||jm<1||jm>12||jd<1||jd>31)return null;const [y,mo,d]=j2g(jy,jm,jd);return `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`}
+function gToJ(s){if(!s)return '';const [y,m,d]=String(s).slice(0,10).split('-').map(Number);const [jy,jm,jd]=g2j(y,m,d);return `${jy}/${String(jm).padStart(2,'0')}/${String(jd).padStart(2,'0')}`}
+
+async function start(){const {data:{session}}=await sb.auth.getSession();if(session)await enter(session);else showLogin();sb.auth.onAuthStateChange(async(e,s)=>{if(e==='SIGNED_OUT')showLogin();else if(s&&(!state.session||state.session.user.id!==s.user.id))await enter(s)})}
+async function enter(session){state.session=session;const {data,error}=await sb.from('profiles').select('*').eq('id',session.user.id).single();if(error||!data){toast('پروفایل کاربری پیدا نشد');return}state.profile=data;$('loginView').classList.add('hidden');$('appView').classList.remove('hidden');document.querySelectorAll('.admin-only').forEach(x=>x.classList.toggle('hidden',!isAdmin()));$('userInfo').textContent=isAdmin()?`مدیر ساختمان — ${session.user.email}`:`ساکن — ${data.full_name||session.user.email}`;await loadAll()}
+function showLogin(){$('appView').classList.add('hidden');$('loginView').classList.remove('hidden')}
+$('loginForm').addEventListener('submit',async e=>{e.preventDefault();const {error}=await sb.auth.signInWithPassword({email:$('loginEmail').value.trim(),password:$('loginPassword').value});if(error)toast('ایمیل یا رمز عبور اشتباه است')})
+async function logout(){await sb.auth.signOut()}
+
+async function loadAll(){const [u,c,p,e,ep,s]=await Promise.all([sb.from('units').select('*'),sb.from('charges').select('*'),sb.from('payments').select('*'),sb.from('expenses').select('*'),sb.from('expense_payments').select('*'),sb.from('building_settings').select('*').limit(1).maybeSingle()]);for(const r of [u,c,p,e,ep])if(r.error){console.error(r.error);return toast('خطا در دریافت اطلاعات')}state.units=u.data||[];state.charges=c.data||[];state.payments=p.data||[];state.expenses=e.data||[];state.expensePayments=ep.data||[];state.settings=s.data||null;if(state.settings?.building_name)$('buildingTitle').textContent=state.settings.building_name;renderAll()}
+function unitLabel(id){const u=state.units.find(x=>x.id===id);return u?`واحد ${esc(u.unit_no)}`:'-'}
+function chargeSum(id){return state.charges.filter(x=>x.unit_id===id).reduce((a,b)=>a+num(b.amount),0)}function paySum(id){return state.payments.filter(x=>x.unit_id===id).reduce((a,b)=>a+num(b.amount),0)}function balance(id){const u=state.units.find(x=>x.id===id);return u?num(u.opening_balance)+chargeSum(id)-paySum(id):0}function badge(v){return v>0?`<span class="badge debt">بدهکار ${fmt(v)}</span>`:v<0?`<span class="badge credit">بستانکار ${fmt(Math.abs(v))}</span>`:`<span class="badge zero">تسویه</span>`}
+function expPays(id){return state.expensePayments.filter(x=>x.expense_id===id)}function expensePaidTotal(x){return expPays(x.id).reduce((a,b)=>a+num(b.amount),0)}function expenseRemaining(x){return Math.max(0,num(x.amount)-expensePaidTotal(x))}function expenseStatus(x){const p=expensePaidTotal(x);return p<=0?'unpaid':p>=num(x.amount)?'paid':'partial'}
+
+async function addUnit(){const no=$('unitNo').value.trim();if(!no)return toast('شماره واحد را وارد کنید');let op=Math.abs(num($('unitOpening').value));if($('unitOpeningType').value==='credit')op=-op;const {error}=await sb.from('units').insert({unit_no:no,floor:$('unitFloor').value.trim(),people_count:num($('unitPeople').value)||1,owner_name:$('unitOwner').value.trim(),resident_name:$('unitResident').value.trim(),phone:$('unitPhone').value.trim(),opening_balance:op});if(error)return toast(error.message);await loadAll();toast('واحد ثبت شد')}
+async function addCharge(){const amount=num($('chargeAmount').value),d=jToG($('chargeDate').value),title=$('chargeTitle').value.trim();if(!amount||!d||!title)return toast('اطلاعات شارژ کامل نیست');const base={title,amount,charge_date:d,description:$('chargeDesc').value.trim(),created_by:state.session.user.id};const rows=$('chargeTarget').value==='all'?state.units.map(u=>({...base,unit_id:u.id})):[{...base,unit_id:$('chargeUnit').value}];const {error}=await sb.from('charges').insert(rows);if(error)return toast(error.message);await loadAll();toast('شارژ ثبت شد')}
+async function addPayment(){const id=$('payUnit').value,amount=num($('payAmount').value),d=jToG($('payDate').value);if(!id||!amount||!d)return toast('اطلاعات پرداخت کامل نیست');const {error}=await sb.from('payments').insert({unit_id:id,amount,payment_date:d,method:$('payMethod').value,reference_no:$('payRef').value.trim(),description:$('payDesc').value.trim(),created_by:state.session.user.id});if(error)return toast(error.message);await loadAll();toast('پرداخت ثبت شد')}
+async function addExpense(){const amount=num($('expAmount').value),d=jToG($('expDate').value);if(!amount||!d)return toast('اطلاعات هزینه کامل نیست');const {error}=await sb.from('expenses').insert({amount,expense_date:d,category:$('expCategory').value,description:$('expDesc').value.trim(),created_by:state.session.user.id});if(error)return toast(error.message);await loadAll();toast('هزینه ثبت شد')}
+
+function sorted(a,mode,dateKey){a=[...a];if(mode==='date_asc')return a.sort((x,y)=>String(x[dateKey]).localeCompare(String(y[dateKey])));if(mode==='date_desc')return a.sort((x,y)=>String(y[dateKey]).localeCompare(String(x[dateKey])));if(mode==='amount_asc')return a.sort((x,y)=>num(x.amount)-num(y.amount));if(mode==='amount_desc')return a.sort((x,y)=>num(y.amount)-num(x.amount));return a}
+function renderUnits(){$('unitsBody').innerHTML=state.units.map(u=>`<tr><td>واحد ${esc(u.unit_no)}</td><td>${esc(u.owner_name||'-')} / ${esc(u.resident_name||'-')}</td><td>${esc(u.phone||'-')}</td><td>${badge(balance(u.id))}</td><td><div class="actions"><button class="btn ok" onclick="openAccountCard('${u.id}')">کارت حساب</button>${isAdmin()?`<button class="btn secondary" onclick="openEdit('units','${u.id}')">ویرایش</button><button class="btn danger" onclick="delRow('units','${u.id}')">حذف</button>`:''}</div></td></tr>`).join('')||'<tr><td colspan="5">واحدی وجود ندارد.</td></tr>'}
+function renderCharges(){$('chargesBody').innerHTML=sorted(state.charges,$('chargeSort').value,'charge_date').map(x=>`<tr><td>${gToJ(x.charge_date)}</td><td>${esc(x.title)}</td><td>${unitLabel(x.unit_id)}</td><td>${fmt(x.amount)}</td><td>${esc(x.description||'')}</td><td>${isAdmin()?`<button class="btn danger" onclick="delRow('charges','${x.id}')">حذف</button>`:'-'}</td></tr>`).join('')}
+function renderPayments(){$('paymentsBody').innerHTML=sorted(state.payments,$('paymentSort').value,'payment_date').map(x=>`<tr><td>${gToJ(x.payment_date)}</td><td>${unitLabel(x.unit_id)}</td><td>${fmt(x.amount)}</td><td>${esc(x.method||'')}</td><td>${esc(x.reference_no||'')}</td><td>${esc(x.description||'')}</td><td>${isAdmin()?`<button class="btn danger" onclick="delRow('payments','${x.id}')">حذف</button>`:'-'}</td></tr>`).join('')}
+function renderExpenses(){$('expensesBody').innerHTML=sorted(state.expenses,$('expenseSort').value,'expense_date').map(x=>{const p=expensePaidTotal(x),r=expenseRemaining(x),s=expenseStatus(x),st=s==='paid'?'<span class="badge paid-badge">تسویه‌شده</span>':s==='partial'?'<span class="badge">بخشی پرداخت‌شده</span>':'<span class="badge unpaid-badge">پرداخت‌نشده</span>';return `<tr><td>${gToJ(x.expense_date)}</td><td>${esc(x.category||'')}</td><td>${fmt(x.amount)}</td><td>${esc(x.description||'')}</td><td>${st}<br><small>پرداخت ${fmt(p)} | مانده ${fmt(r)}</small></td><td>-</td><td>-</td><td><button class="btn ${r>0?'ok':'secondary'}" onclick="openPayExpense('${x.id}')">${r>0?'پرداخت هزینه':'سوابق پرداخت'}</button>${isAdmin()?` <button class="btn danger" onclick="delRow('expenses','${x.id}')">حذف</button>`:''}</td></tr>`}).join('')}
+function renderSelects(){const opts=state.units.map(u=>`<option value="${u.id}">واحد ${esc(u.unit_no)}</option>`).join('');['chargeUnit','payUnit','statementUnit'].forEach(id=>{const old=$(id).value;$(id).innerHTML='<option value="">انتخاب واحد</option>'+opts;if([...$(id).options].some(o=>o.value===old))$(id).value=old});if(!isAdmin()&&state.units.length===1)$('statementUnit').value=state.units[0].id}
+function accountTransactions(id){const u=state.units.find(x=>x.id===id),r=[];if(!u)return r;if(num(u.opening_balance)!==0)r.push({date:'-',sort:'0000-00-00',type:'مانده اولیه',desc:'ابتدای دوره',debt:u.opening_balance>0?u.opening_balance:0,credit:u.opening_balance<0?Math.abs(u.opening_balance):0});state.charges.filter(x=>x.unit_id===id).forEach(x=>r.push({date:gToJ(x.charge_date),sort:x.charge_date,type:'شارژ',desc:x.title,debt:x.amount,credit:0}));state.payments.filter(x=>x.unit_id===id).forEach(x=>r.push({date:gToJ(x.payment_date),sort:x.payment_date,type:'پرداخت',desc:x.description||x.method,debt:0,credit:x.amount}));r.sort((a,b)=>a.sort.localeCompare(b.sort));let b=0;return r.map(x=>{b+=num(x.debt)-num(x.credit);return {...x,balance:b}})}
+function renderStatement(){const id=$('statementUnit').value;if(!id)return $('statementBody').innerHTML='<tr><td colspan="6">واحد را انتخاب کنید.</td></tr>';const u=state.units.find(x=>x.id===id),rows=accountTransactions(id);$('statementSummary').innerHTML=`واحد ${esc(u.unit_no)} — ${badge(balance(id))}`;$('statementBody').innerHTML=rows.map(r=>`<tr><td>${r.date}</td><td>${r.type}</td><td>${esc(r.desc)}</td><td>${r.debt?fmt(r.debt):'-'}</td><td>${r.credit?fmt(r.credit):'-'}</td><td>${r.balance>0?'بدهکار '+fmt(r.balance):r.balance<0?'بستانکار '+fmt(Math.abs(r.balance)):'تسویه'}</td></tr>`).join('')}
+function renderKpis(){const bs=state.units.map(u=>balance(u.id));$('kDebt').textContent=fmt(bs.filter(x=>x>0).reduce((a,b)=>a+b,0));$('kCredit').textContent=fmt(Math.abs(bs.filter(x=>x<0).reduce((a,b)=>a+b,0)));$('kFund').textContent=fmt(state.payments.reduce((a,b)=>a+num(b.amount),0)-state.expensePayments.reduce((a,b)=>a+num(b.amount),0));$('kExpense').textContent=fmt(state.expenses.reduce((a,b)=>a+num(b.amount),0))}
+function renderAll(){renderSelects();renderUnits();renderCharges();renderPayments();renderExpenses();renderStatement();renderKpis()}
+
+function openAccountCard(id){selectedAccountUnitId=id;$('accountModal').classList.remove('hidden');renderAccountCard()}function closeAccountCard(){$('accountModal').classList.add('hidden');selectedAccountUnitId=null}function clearAccountFilter(){$('accountFromDate').value='';$('accountToDate').value='';renderAccountCard()}
+function renderAccountCard(){const u=state.units.find(x=>x.id===selectedAccountUnitId);if(!u)return;let rows=accountTransactions(u.id);$('accountTitle').textContent=`کارت حساب واحد ${u.unit_no}`;$('accountSubtitle').textContent=`مالک: ${u.owner_name||'-'} | ساکن: ${u.resident_name||'-'}`;if($('accountSort').value==='date_desc')rows.reverse();$('accountSummaryGrid').innerHTML=`<div class="account-summary-item"><span>مانده فعلی</span><b>${fmt(balance(u.id))}</b></div><div class="account-summary-item"><span>جمع شارژها</span><b>${fmt(chargeSum(u.id))}</b></div><div class="account-summary-item"><span>جمع پرداخت‌ها</span><b>${fmt(paySum(u.id))}</b></div><div class="account-summary-item"><span>مانده اولیه</span><b>${fmt(u.opening_balance)}</b></div>`;$('accountBody').innerHTML=rows.map(r=>`<tr><td>${r.date}</td><td>${r.type}</td><td>${esc(r.desc)}</td><td>${r.debt?fmt(r.debt):'-'}</td><td>${r.credit?fmt(r.credit):'-'}</td><td>${fmt(r.balance)}</td></tr>`).join('')}
+function exportAccountCSV(){toast('خروجی کارت حساب در مرحله بعد تکمیل می‌شود')} function printAccountCard(){window.print()}
+
+function openPayExpense(id){const x=state.expenses.find(e=>e.id===id);$('payExpenseId').value=id;$('payExpenseDate').value=todayJ();$('payExpenseDesc').value='';$('payExpenseAmount').value='';$('payExpenseInfo').innerHTML=`مبلغ کل: ${fmt(x.amount)} | پرداخت‌شده: ${fmt(expensePaidTotal(x))} | مانده: ${fmt(expenseRemaining(x))}`;renderExpensePaymentHistory(x);$('payExpenseModal').classList.remove('hidden')}function closePayExpense(){$('payExpenseModal').classList.add('hidden')}function toggleExpensePayMode(){const x=state.expenses.find(e=>e.id===$('payExpenseId').value),all=$('payExpenseMode').value==='all';$('payExpenseAmountWrap').style.display=all?'none':'block';if(all)$('payExpenseAmount').value=expenseRemaining(x)}
+async function confirmPayExpense(){if(!isAdmin())return;const x=state.expenses.find(e=>e.id===$('payExpenseId').value),rem=expenseRemaining(x),amount=$('payExpenseMode').value==='all'?rem:num($('payExpenseAmount').value),d=jToG($('payExpenseDate').value),desc=$('payExpenseDesc').value.trim();if(!d||amount<=0||amount>rem||!desc)return toast('اطلاعات پرداخت هزینه کامل نیست');const {error}=await sb.from('expense_payments').insert({expense_id:x.id,amount,payment_date:d,description:desc,created_by:state.session.user.id});if(error)return toast(error.message);await loadAll();openPayExpense(x.id);toast('پرداخت ثبت شد')}
+function renderExpensePaymentHistory(x){$('expensePaymentsBody').innerHTML=expPays(x.id).map(p=>`<tr><td>${gToJ(p.payment_date)}</td><td>${fmt(p.amount)}</td><td>${esc(p.description||'')}</td><td>${isAdmin()?`<button class="btn danger" onclick="delRow('expense_payments','${p.id}')">حذف</button>`:'-'}</td></tr>`).join('')||'<tr><td colspan="4">پرداختی وجود ندارد.</td></tr>'}function deleteExpensePayment(eid,pid){delRow('expense_payments',pid)}
+
+function openEdit(kind,id){toast('ویرایش آنلاین در مرحله بعد فعال می‌شود')}function closeEdit(){$('editModal').classList.add('hidden')}function saveEdit(){}
+async function delRow(table,id){if(!isAdmin()||!confirm('حذف شود؟'))return;const {error}=await sb.from(table).delete().eq('id',id);if(error)return toast(error.message);await loadAll();toast('حذف شد')}function del(kind,id){delRow(kind,id)}
+
+function csvCell(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
+function exportCSV(){const rows=[['واحدها'],['واحد','مالک','ساکن','مانده'],...state.units.map(u=>[u.unit_no,u.owner_name,u.resident_name,balance(u.id)]),[],['شارژها'],['تاریخ','عنوان','واحد','مبلغ'],...state.charges.map(x=>[gToJ(x.charge_date),x.title,unitLabel(x.unit_id),x.amount]),[],['پرداخت‌ها'],['تاریخ','واحد','مبلغ','شرح'],...state.payments.map(x=>[gToJ(x.payment_date),unitLabel(x.unit_id),x.amount,x.description]),[],['هزینه‌ها'],['تاریخ','دسته','مبلغ','پرداخت‌شده','مانده'],...state.expenses.map(x=>[gToJ(x.expense_date),x.category,x.amount,expensePaidTotal(x),expenseRemaining(x)])];const blob=new Blob(['\ufeff'+rows.map(r=>r.map(csvCell).join(',')).join('\n')],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='kh17-online.csv';a.click()}
+function exportBackup(){const data={units:state.units,charges:state.charges,payments:state.payments,expenses:state.expenses,expense_payments:state.expensePayments};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='kh17-online-backup.json';a.click()}function importBackup(){toast('بازیابی دیتابیس آنلاین را بعد از تست مدیر فعال می‌کنیم')}
+
+$('chargeTarget').onchange=()=>$('chargeUnitWrap').style.display=$('chargeTarget').value==='single'?'block':'none';
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.page).classList.add('active')})
+$('chargeDate').value=todayJ();$('payDate').value=todayJ();$('expDate').value=todayJ();
+start();
+</script>
+
+</body>
+</html>
